@@ -1,0 +1,18 @@
+{
+  "name": "im-csms-sdk-javascript-v4",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.25.0",
+    "crypto-js": "^4.1.1",
+    "dotenv": "^14.3.2"
+  }
+}
