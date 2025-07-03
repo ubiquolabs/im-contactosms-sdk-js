@@ -12,122 +12,114 @@ const api = new SmsApi(
  * Complete example of contact management operations
  */
 const contactsExample = async () => {
-  console.log("📞 Contact Management Example");
-  console.log("=============================");
+  console.log("📞 Contacts API Examples");
+  console.log("=======================");
 
   try {
-    // 1. List all contacts
-    console.log("\n1. 📋 Listing contacts...");
+    // 1. List contacts with filters
+    console.log("\n1. Listing contacts...");
     const contacts = await api.contacts.listContacts({
       limit: 10,
-      status: "SUSCRIBED",
+      status: "SUBSCRIBED",
+      query: "12345678", // Search by phone number or name
     });
-
+    
     if (contacts.ok) {
       console.log(`✅ Found ${contacts.data?.length || 0} contacts`);
-      contacts.data?.forEach((contact, index) => {
-        console.log(`   ${index + 1}. ${contact.full_name || 'No name'} - ${contact.msisdn}`);
-      });
+      console.log("Sample contacts:", contacts.data?.slice(0, 2));
     } else {
-      console.log("❌ Failed to list contacts:", contacts.data?.error || contacts.error);
+      console.log("❌ Failed to list contacts:", contacts.error);
     }
 
     // 2. Create a new contact
-    console.log("\n2. ➕ Creating a new contact...");
+    console.log("\n2. Creating a new contact...");
     const newContact = await api.contacts.createContact({
-      phoneNumber: "87654321",
+      phoneNumber: "12345678",
       countryCode: "502",
-      firstName: "Alice",
-      lastName: "Johnson",
-      customField1: "VIP Customer",
-      customField2: "Premium",
+      firstName: "John",
+      lastName: "Doe",
     });
-
+    
     if (newContact.ok) {
-      console.log("✅ Contact created successfully!");
-      console.log(`   MSISDN: ${newContact.data?.msisdn}`);
-      console.log(`   Name: ${newContact.data?.first_name} ${newContact.data?.last_name}`);
+      console.log("✅ Contact created successfully");
+      console.log("Contact data:", newContact.data);
     } else {
-      console.log("❌ Failed to create contact:", newContact.data?.error || newContact.error);
+      console.log("❌ Failed to create contact:", newContact.error);
     }
 
-    // 3. Get a specific contact
-    console.log("\n3. 🔍 Getting specific contact...");
-    const contact = await api.contacts.getContact("50287654321");
-
+    // 3. Get specific contact
+    console.log("\n3. Getting contact details...");
+    const contact = await api.contacts.getContact("50212345678");
+    
     if (contact.ok) {
-      console.log("✅ Contact retrieved successfully!");
-      console.log(`   Name: ${contact.data?.first_name} ${contact.data?.last_name}`);
-      console.log(`   Phone: ${contact.data?.phone_number}`);
-      console.log(`   Status: ${contact.data?.status}`);
+      console.log("✅ Contact retrieved successfully");
+      console.log("Contact details:", contact.data);
     } else {
-      console.log("❌ Failed to get contact:", contact.data?.error || contact.error);
+      console.log("❌ Failed to get contact:", contact.error);
     }
 
-    // 4. Update the contact
-    console.log("\n4. ✏️ Updating contact...");
-    const updatedContact = await api.contacts.updateContact("50287654321", {
-      firstName: "Alice",
+    // 4. Update contact
+    console.log("\n4. Updating contact...");
+    const updatedContact = await api.contacts.updateContact("50212345678", {
+      firstName: "Jane",
       lastName: "Smith",
-      customField1: "Updated VIP Customer",
-      customField3: "New field",
     });
-
+    
     if (updatedContact.ok) {
-      console.log("✅ Contact updated successfully!");
-      console.log(`   New name: ${updatedContact.data?.first_name} ${updatedContact.data?.last_name}`);
+      console.log("✅ Contact updated successfully");
+      console.log("Updated contact:", updatedContact.data);
     } else {
-      console.log("❌ Failed to update contact:", updatedContact.data?.error || updatedContact.error);
+      console.log("❌ Failed to update contact:", updatedContact.error);
     }
 
-    // 5. Get contact groups
-    console.log("\n5. 🏷️ Getting contact groups...");
-    const groups = await api.contacts.getContactGroups("50287654321");
-
-    if (groups.ok) {
-      console.log("✅ Contact groups retrieved successfully!");
-      console.log(`   Groups: ${groups.data?.length || 0} groups found`);
-      groups.data?.forEach((group, index) => {
-        console.log(`   ${index + 1}. ${group.name} (${group.short_name})`);
-      });
+    // 5. Get contact groups (alternative to tags)
+    console.log("\n5. Getting contact groups...");
+    const contactGroups = await api.contacts.getContactGroups("50212345678");
+    
+    if (contactGroups.ok) {
+      console.log("✅ Contact groups retrieved successfully");
+      console.log("Contact groups:", contactGroups.data);
     } else {
-      console.log("❌ Failed to get contact groups:", groups.data?.error || groups.error);
+      console.log("❌ Failed to get contact groups:", contactGroups.error);
     }
 
-    // 6. Add a tag to the contact
-    console.log("\n6. 🏷️ Adding tag to contact...");
-    const addTag = await api.contacts.addTagToContact("50287654321", "vip");
-
+    // 6. Add tag to contact
+    console.log("\n6. Adding tag to contact...");
+    const addTag = await api.contacts.addTagToContact("50212345678", "customers");
+    
     if (addTag.ok) {
-      console.log("✅ Tag added successfully!");
+      console.log("✅ Tag added successfully");
+      console.log("Updated contact:", addTag.data);
     } else {
-      console.log("❌ Failed to add tag:", addTag.data?.error || addTag.error);
+      console.log("❌ Failed to add tag:", addTag.error);
     }
 
-    // 7. Remove a tag from the contact
-    console.log("\n7. 🗑️ Removing tag from contact...");
-    const removeTag = await api.contacts.removeTagFromContact("50287654321", "vip");
-
+    // 7. Remove tag from contact
+    console.log("\n7. Removing tag from contact...");
+    const removeTag = await api.contacts.removeTagFromContact("50212345678", "customers");
+    
     if (removeTag.ok) {
-      console.log("✅ Tag removed successfully!");
+      console.log("✅ Tag removed successfully");
     } else {
-      console.log("❌ Failed to remove tag:", removeTag.data?.error || removeTag.error);
+      console.log("❌ Failed to remove tag:", removeTag.error);
     }
 
-    // 8. Delete the contact (cleanup)
-    console.log("\n8. 🗑️ Deleting contact (cleanup)...");
-    const deleteContact = await api.contacts.deleteContact("50287654321");
-
-    if (deleteContact.ok) {
-      console.log("✅ Contact deleted successfully!");
+    // 8. Delete contact (commented out to avoid accidental deletion)
+    /*
+    console.log("\n8. Deleting contact...");
+    const deleteResult = await api.contacts.deleteContact("50212345678");
+    
+    if (deleteResult.ok) {
+      console.log("✅ Contact deleted successfully");
     } else {
-      console.log("❌ Failed to delete contact:", deleteContact.data?.error || deleteContact.error);
+      console.log("❌ Failed to delete contact:", deleteResult.error);
     }
+    */
 
     console.log("\n✨ Contact management example completed!");
 
   } catch (error) {
-    console.error("❌ Contact example error:", error.message);
+    console.error("❌ Error in contacts example:", error.message);
   }
 };
 

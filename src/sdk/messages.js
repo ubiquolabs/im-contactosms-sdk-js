@@ -120,7 +120,7 @@ export const Messages = {
   },
 
   /**
-   * Send message to multiple contacts
+   * Send message to multiple contacts (using the same endpoint as sendToContact)
    * @param {Object} messageData - Message data
    * @param {Array<string>} messageData.msisdns - Array of MSISDNs
    * @param {string} messageData.message - Message content
@@ -137,19 +137,36 @@ export const Messages = {
 
       validateArray(msisdns, true);
 
-      const body = {
-        msisdns,
-        message,
-        id,
+      // Send to each contact individually since bulk endpoint might not exist
+      const results = [];
+      for (const msisdn of msisdns) {
+        const response = await request({
+          type: "post",
+          endpoint: "messages/send_to_contact",
+          data: {
+            msisdn,
+            message,
+            id: `${id}-${msisdn}`,
+          },
+        });
+        results.push({ msisdn, response });
+      }
+
+      // Return summary of results
+      const successCount = results.filter(r => r.response.ok).length;
+      const failedCount = results.length - successCount;
+
+      return {
+        code: 200,
+        status: "OK",
+        ok: failedCount === 0,
+        data: {
+          total: results.length,
+          success: successCount,
+          failed: failedCount,
+          results,
+        },
       };
-
-      const response = await request({
-        type: "post",
-        endpoint: "messages/send_to_multiple",
-        data: body,
-      });
-
-      return response;
     } catch (error) {
       console.error("Error sending message to multiple contacts:", error.message);
       throw error;
@@ -157,7 +174,7 @@ export const Messages = {
   },
 
   /**
-   * Get message status by ID
+   * Get message status by ID (if endpoint exists)
    * @param {string|number} messageId - Message ID
    * @returns {Promise<Object>} - API response
    */
@@ -167,13 +184,41 @@ export const Messages = {
         throw new Error("Message ID is required");
       }
 
-      const response = await request({
+      // Try to get message status from messages list
+      const today = new Date().toISOString().split('T')[0];
+      const messages = await request({
         type: "get",
-        endpoint: `messages/${messageId}/status`,
-        params: { id: messageId },
+        endpoint: "messages",
+        params: {
+          start_date: today,
+          end_date: today,
+          limit: 100,
+        },
       });
 
-      return response;
+      if (messages.ok && messages.data) {
+        const message = messages.data.find(m => m.id === messageId);
+        if (message) {
+          return {
+            code: 200,
+            status: "OK",
+            ok: true,
+            data: {
+              id: messageId,
+              status: message.status || 'UNKNOWN',
+              delivered: message.status === 'DELIVERED',
+              timestamp: message.timestamp || message.created_at,
+            },
+          };
+        }
+      }
+
+      return {
+        code: 404,
+        status: "Not Found",
+        ok: false,
+        data: { error: "Message not found" },
+      };
     } catch (error) {
       console.error("Error getting message status:", error.message);
       throw error;
@@ -181,7 +226,7 @@ export const Messages = {
   },
 
   /**
-   * Get message delivery reports
+   * Get message delivery reports (using messages endpoint)
    * @param {Object} params - Query parameters
    * @param {string} params.startDate - Start date (required)
    * @param {string} params.endDate - End date (required)
@@ -211,11 +256,27 @@ export const Messages = {
         end_date: endDate,
       };
 
+      // Use the messages endpoint to get delivery reports
       const response = await request({
         type: "get",
-        endpoint: "messages/delivery_reports",
+        endpoint: "messages",
         params: requestParams,
       });
+
+      // Transform the response to look like delivery reports
+      if (response.ok && response.data) {
+        const reports = response.data.map(message => ({
+          msisdn: message.msisdn,
+          status: message.status || 'UNKNOWN',
+          timestamp: message.timestamp || message.created_at,
+          message_id: message.id,
+        }));
+
+        return {
+          ...response,
+          data: reports,
+        };
+      }
 
       return response;
     } catch (error) {

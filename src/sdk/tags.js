@@ -1,259 +1,236 @@
-import { request } from "./helper.js";
-import { validateContactStatus, validateInteger } from "./helper.js";
+import { request, validateInteger } from "./helper.js";
 
+/**
+ * Tags API module
+ */
 export const Tags = {
+
   /**
-   * Get tags with optional filtering
+   * List tags with optional search
    * @param {Object} params - Query parameters
-   * @param {string} params.query - Search query
-   * @param {number} params.limit - Number of results to return
-   * @param {number} params.start - Starting offset
-   * @param {number} params.shortResults - Return short results (0 or 1)
+   * @param {string} params.search - Search filter for tag names
    * @returns {Promise<Object>} - API response
    */
-  listTags: async (params = {}) => {
+  async listTags(params = {}) {
     try {
-      // Validate parameters
-      validateInteger(params.start);
-      validateInteger(params.limit);
-      validateInteger(params.shortResults, true);
-
-      const response = await request({
-        type: "get",
-        endpoint: "tags",
+      return await request({
+        type: "GET",
+        endpoint: "/tags",
         params,
       });
-
-      return response;
     } catch (error) {
-      console.error("Error listing tags:", error.message);
-      throw error;
-    }
-  },
-
-  /**
-   * Get a specific tag by short name
-   * @param {string} shortName - Tag's short name
-   * @returns {Promise<Object>} - API response
-   */
-  getTag: async (shortName) => {
-    try {
-      if (!shortName) {
-        throw new Error("Tag short name is required");
-      }
-
-      const response = await request({
-        type: "get",
-        endpoint: `tags/${shortName}`,
-        params: { tag_name: shortName },
-      });
-
-      return response;
-    } catch (error) {
-      console.error("Error getting tag:", error.message);
-      throw error;
-    }
-  },
-
-  /**
-   * Get contacts that belong to a specific tag
-   * @param {string} shortName - Tag's short name
-   * @param {Object} params - Query parameters
-   * @param {number} params.limit - Number of results to return
-   * @param {number} params.start - Starting offset
-   * @param {string} params.status - Contact status filter
-   * @param {number} params.shortResults - Return short results (0 or 1)
-   * @returns {Promise<Object>} - API response
-   */
-  getTagContacts: async (shortName, params = {}) => {
-    try {
-      if (!shortName) {
-        throw new Error("Tag short name is required");
-      }
-
-      // Validate parameters
-      validateContactStatus(params.status);
-      validateInteger(params.limit);
-      validateInteger(params.start);
-      validateInteger(params.shortResults, true);
-
-      const requestParams = {
-        ...params,
-        tag_name: shortName,
+      return {
+        ok: false,
+        error: error.message,
       };
-
-      const response = await request({
-        type: "get",
-        endpoint: `tags/${shortName}/contacts`,
-        params: requestParams,
-      });
-
-      return response;
-    } catch (error) {
-      console.error("Error getting tag contacts:", error.message);
-      throw error;
     }
   },
 
   /**
-   * Create a new tag
-   * @param {Object} tagData - Tag data
-   * @param {string} tagData.name - Tag name
-   * @param {string} tagData.shortName - Tag short name (optional)
-   * @param {string} tagData.description - Tag description (optional)
+   * Get contacts in a specific tag
+   * @param {string} tagName - Tag name (short_name)
+   * @param {Object} params - Query parameters
+   * @param {number} params.limit - Limit of records (default 50, max 1000)
+   * @param {number} params.start - Offset for pagination (default 0)
    * @returns {Promise<Object>} - API response
    */
-  createTag: async (tagData) => {
+  async getTagContacts(tagName, params = {}) {
     try {
-      const { name, shortName, description } = tagData;
-
-      if (!name) {
+      if (!tagName) {
         throw new Error("Tag name is required");
       }
 
-      const body = {
-        name,
-        short_name: shortName,
-        description,
-      };
+      // Validate parameters
+      if (params.limit) validateInteger(params.limit);
+      if (params.start) validateInteger(params.start);
 
-      const response = await request({
-        type: "post",
-        endpoint: "tags",
-        data: body,
+      return await request({
+        type: "GET",
+        endpoint: `/tags/${tagName}/contacts`,
+        params,
       });
-
-      return response;
     } catch (error) {
-      console.error("Error creating tag:", error.message);
-      throw error;
-    }
-  },
-
-  /**
-   * Update an existing tag
-   * @param {string} shortName - Tag's short name
-   * @param {Object} tagData - Tag data to update
-   * @param {string} tagData.name - Tag name (optional)
-   * @param {string} tagData.description - Tag description (optional)
-   * @returns {Promise<Object>} - API response
-   */
-  updateTag: async (shortName, tagData) => {
-    try {
-      if (!shortName) {
-        throw new Error("Tag short name is required");
-      }
-
-      const { name, description } = tagData;
-
-      const body = {
-        name,
-        description,
+      return {
+        ok: false,
+        error: error.message,
       };
-
-      const response = await request({
-        type: "put",
-        endpoint: `tags/${shortName}`,
-        params: { tag_name: shortName },
-        data: body,
-      });
-
-      return response;
-    } catch (error) {
-      console.error("Error updating tag:", error.message);
-      throw error;
     }
   },
 
   /**
    * Delete a tag
-   * @param {string} shortName - Tag's short name
+   * @param {string} tagName - Tag name to delete
    * @returns {Promise<Object>} - API response
    */
-  deleteTag: async (shortName) => {
+  async deleteTag(tagName) {
     try {
-      if (!shortName) {
-        throw new Error("Tag short name is required");
+      if (!tagName) {
+        throw new Error("Tag name is required");
       }
 
-      const response = await request({
-        type: "delete",
-        endpoint: `tags/${shortName}`,
-        params: { tag_name: shortName },
+      return await request({
+        type: "DELETE",
+        endpoint: `/tags/${tagName}`,
       });
-
-      return response;
     } catch (error) {
-      console.error("Error deleting tag:", error.message);
-      throw error;
+      return {
+        ok: false,
+        error: error.message,
+      };
     }
   },
 
   /**
-   * Add multiple contacts to a tag
-   * @param {string} shortName - Tag's short name
-   * @param {Array<string>} msisdns - Array of MSISDNs to add
+   * Get specific tag information (not available in API, returns error)
+   * @param {string} tagName - Tag name
    * @returns {Promise<Object>} - API response
    */
-  addContactsToTag: async (shortName, msisdns) => {
+  async getTag(tagName) {
     try {
-      if (!shortName || !msisdns) {
-        throw new Error("Tag short name and MSISDNs array are required");
+      if (!tagName) {
+        throw new Error("Tag name is required");
       }
 
-      if (!Array.isArray(msisdns)) {
-        throw new Error("MSISDNs must be an array");
+      // This endpoint doesn't exist in the official API
+      // We'll try to get tag info by listing all tags and filtering
+      const allTags = await Tags.listTags();
+      
+      if (allTags.ok && allTags.data) {
+        const tag = allTags.data.find(t => t.name === tagName);
+        if (tag) {
+          return {
+            ok: true,
+            data: tag,
+          };
+        }
       }
 
-      const body = {
-        msisdns,
+      return {
+        ok: false,
+        error: "Tag not found",
+        code: 404,
       };
-
-      const response = await request({
-        type: "post",
-        endpoint: `tags/${shortName}/contacts`,
-        params: { tag_name: shortName },
-        data: body,
-      });
-
-      return response;
     } catch (error) {
-      console.error("Error adding contacts to tag:", error.message);
-      throw error;
+      return {
+        ok: false,
+        error: error.message,
+      };
     }
   },
 
   /**
-   * Remove multiple contacts from a tag
-   * @param {string} shortName - Tag's short name
-   * @param {Array<string>} msisdns - Array of MSISDNs to remove
+   * Create a tag (not available in API, returns error)
+   * @param {Object} tagData - Tag data
+   * @param {string} tagData.name - Tag name
+   * @param {string} tagData.shortName - Tag short name
+   * @param {string} tagData.description - Tag description
    * @returns {Promise<Object>} - API response
    */
-  removeContactsFromTag: async (shortName, msisdns) => {
+  async createTag(tagData) {
     try {
-      if (!shortName || !msisdns) {
-        throw new Error("Tag short name and MSISDNs array are required");
+      if (!tagData.name) {
+        throw new Error("Tag name is required");
       }
 
-      if (!Array.isArray(msisdns)) {
-        throw new Error("MSISDNs must be an array");
-      }
-
-      const body = {
-        msisdns,
+      // This endpoint doesn't exist in the official API
+      return {
+        ok: false,
+        error: "Tag creation is not supported by this API",
+        code: 405,
       };
-
-      const response = await request({
-        type: "delete",
-        endpoint: `tags/${shortName}/contacts`,
-        params: { tag_name: shortName },
-        data: body,
-      });
-
-      return response;
     } catch (error) {
-      console.error("Error removing contacts from tag:", error.message);
-      throw error;
+      return {
+        ok: false,
+        error: error.message,
+      };
+    }
+  },
+
+  /**
+   * Update a tag (not available in API, returns error)
+   * @param {string} tagName - Tag name
+   * @param {Object} updateData - Data to update
+   * @returns {Promise<Object>} - API response
+   */
+  async updateTag(tagName, updateData) {
+    try {
+      if (!tagName) {
+        throw new Error("Tag name is required");
+      }
+
+      // This endpoint doesn't exist in the official API
+      return {
+        ok: false,
+        error: "Tag updates are not supported by this API",
+        code: 405,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error: error.message,
+      };
+    }
+  },
+
+  /**
+   * Add contacts to tag (not available in API, returns error)
+   * @param {string} tagName - Tag name
+   * @param {Array<string>} msisdns - Array of MSISDNs
+   * @returns {Promise<Object>} - API response
+   */
+  async addContactsToTag(tagName, msisdns) {
+    try {
+      if (!tagName) {
+        throw new Error("Tag name is required");
+      }
+
+      if (!msisdns || !Array.isArray(msisdns)) {
+        throw new Error("MSISDNs array is required");
+      }
+
+      // This endpoint doesn't exist in the official API
+      // Tags are managed through individual contact operations
+      return {
+        ok: false,
+        error: "Bulk tag operations are not supported. Use addTagToContact() for individual contacts.",
+        code: 405,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error: error.message,
+      };
+    }
+  },
+
+  /**
+   * Remove contacts from tag (not available in API, returns error)
+   * @param {string} tagName - Tag name
+   * @param {Array<string>} msisdns - Array of MSISDNs
+   * @returns {Promise<Object>} - API response
+   */
+  async removeContactsFromTag(tagName, msisdns) {
+    try {
+      if (!tagName) {
+        throw new Error("Tag name is required");
+      }
+
+      if (!msisdns || !Array.isArray(msisdns)) {
+        throw new Error("MSISDNs array is required");
+      }
+
+      // This endpoint doesn't exist in the official API
+      // Tags are managed through individual contact operations
+      return {
+        ok: false,
+        error: "Bulk tag operations are not supported. Use removeTagFromContact() for individual contacts.",
+        code: 405,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error: error.message,
+      };
     }
   },
 }; 

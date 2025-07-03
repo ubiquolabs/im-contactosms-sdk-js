@@ -148,10 +148,6 @@ export const Contacts = {
    */
   updateContact: async (msisdn, contactData) => {
     try {
-      if (!msisdn) {
-        throw new Error("MSISDN is required");
-      }
-
       const { phoneNumber, countryCode, firstName, lastName, customField1, customField2, customField3, customField4, customField5 } = contactData;
 
       const body = {
@@ -188,10 +184,6 @@ export const Contacts = {
    */
   deleteContact: async (msisdn) => {
     try {
-      if (!msisdn) {
-        throw new Error("MSISDN is required");
-      }
-
       const response = await request({
         type: "delete",
         endpoint: `contacts/${msisdn}`,

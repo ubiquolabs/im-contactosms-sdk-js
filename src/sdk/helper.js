@@ -10,23 +10,23 @@ import { config } from "./config/dotenv.js";
  */
 const validateConfig = (config) => {
   if (!config.apiKey || !config.apiSecret) {
-    throw new Error("API_KEY and API_SECRET are required in environment variables");
+    throw new Error("API_KEY and API_SECRET are required");
   }
   if (!config.url) {
-    throw new Error("URL is required in environment variables");
+    throw new Error("URL is required");
   }
   return true;
 };
 
 /**
- * Validates contact status
+ * Validates contact status according to official documentation
  * @param {string} status - Contact status to validate
  * @returns {boolean} - True if valid
  */
 export const validateContactStatus = (status) => {
   if (!status) return true;
   
-  const validStatuses = ["SUSCRIBED", "CONFIRMED", "CANCELLED", "INVITED"];
+  const validStatuses = ["SUBSCRIBED", "INVITED", "CONFIRMED", "CANCELLED"];
   if (!validStatuses.includes(status)) {
     throw new Error(`Invalid status: ${status}. Valid statuses are: ${validStatuses.join(", ")}`);
   }
@@ -96,10 +96,10 @@ export const validateArray = (value, required = false) => {
 
 /**
  * Creates authorization headers for API requests
- * @param {Object} config - Request configuration
+ * @param {Object} requestConfig - Request configuration
  * @returns {Object} - Authorization headers
  */
-const authorization = (config) => {
+const authorization = (requestConfig) => {
   console.log("2. Authorization");
 
   validateConfig(config);
@@ -109,15 +109,15 @@ const authorization = (config) => {
   let formattedData = "";
   const formattedDate = new Date().toUTCString();
 
-  if (config.data) {
-    formattedData = JSON.stringify(config.data);
+  if (requestConfig.data) {
+    formattedData = JSON.stringify(requestConfig.data);
   }
 
-  if (config.params) {
-    formattedParams = Object.keys(sortParams(config.params))
+  if (requestConfig.params) {
+    formattedParams = Object.keys(sortParams(requestConfig.params))
       .map(
         (key) =>
-          key + "=" + encodeURIComponent(config.params[key]).replace(/%20/g, "+")
+          key + "=" + encodeURIComponent(requestConfig.params[key]).replace(/%20/g, "+")
       )
       .join("&");
   }
@@ -147,10 +147,16 @@ const authorization = (config) => {
  */
 export const request = async (data) => {
   try {
-    if (data.params) config.params = data.params;
-    if (data.data) config.data = data.data;
+    // Create a clean request configuration for this specific request
+    const requestConfig = {
+      apiKey: config.apiKey,
+      apiSecret: config.apiSecret,
+      url: config.url,
+      params: data.params || null,
+      data: data.data || null,
+    };
 
-    const auth = authorization(config);
+    const auth = authorization(requestConfig);
 
     console.log("3. Send request");
     const response = await axios({
