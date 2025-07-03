@@ -3,25 +3,124 @@ import crypto from "crypto";
 import { sortParams } from "./lib/sortParams.js";
 import { config } from "./config/dotenv.js";
 
+/**
+ * Validates required configuration
+ * @param {Object} config - Configuration object
+ * @returns {boolean} - True if valid
+ */
+const validateConfig = (config) => {
+  if (!config.apiKey || !config.apiSecret) {
+    throw new Error("API_KEY and API_SECRET are required in environment variables");
+  }
+  if (!config.url) {
+    throw new Error("URL is required in environment variables");
+  }
+  return true;
+};
+
+/**
+ * Validates contact status
+ * @param {string} status - Contact status to validate
+ * @returns {boolean} - True if valid
+ */
+export const validateContactStatus = (status) => {
+  if (!status) return true;
+  
+  const validStatuses = ["SUSCRIBED", "CONFIRMED", "CANCELLED", "INVITED"];
+  if (!validStatuses.includes(status)) {
+    throw new Error(`Invalid status: ${status}. Valid statuses are: ${validStatuses.join(", ")}`);
+  }
+  return true;
+};
+
+/**
+ * Validates integer values
+ * @param {any} value - Value to validate
+ * @param {boolean} isBoolean - Whether the value should be 0 or 1
+ * @returns {boolean} - True if valid
+ */
+export const validateInteger = (value, isBoolean = false) => {
+  if (value === null || value === undefined) return true;
+  
+  if (!Number.isInteger(Number(value))) {
+    throw new Error(`Value ${value} is not numeric`);
+  }
+  
+  if (isBoolean && ![0, 1].includes(Number(value))) {
+    throw new Error(`Value ${value} is not 0 or 1`);
+  }
+  
+  return true;
+};
+
+/**
+ * Validates and formats date
+ * @param {string|Date} value - Date value to validate
+ * @param {boolean} required - Whether the date is required
+ * @returns {string} - Formatted date string
+ */
+export const validateDate = (value, required = false) => {
+  if (!value && !required) return null;
+  
+  let date;
+  if (typeof value === 'string') {
+    date = new Date(value);
+  } else if (value instanceof Date) {
+    date = value;
+  } else {
+    throw new Error(`Invalid date format: ${value}`);
+  }
+  
+  if (isNaN(date.getTime())) {
+    throw new Error(`Invalid date: ${value}`);
+  }
+  
+  return date.toISOString().slice(0, 19).replace('T', ' ');
+};
+
+/**
+ * Validates array values
+ * @param {any} value - Value to validate
+ * @param {boolean} required - Whether the array is required
+ * @returns {boolean} - True if valid
+ */
+export const validateArray = (value, required = false) => {
+  if (!value && !required) return true;
+  
+  if (!Array.isArray(value)) {
+    throw new Error(`Expected array, got: ${typeof value}`);
+  }
+  
+  return true;
+};
+
+/**
+ * Creates authorization headers for API requests
+ * @param {Object} config - Request configuration
+ * @returns {Object} - Authorization headers
+ */
 const authorization = (config) => {
   console.log("2. Authorization");
+
+  validateConfig(config);
 
   const auth = {};
   let formattedParams = "";
   let formattedData = "";
   const formattedDate = new Date().toUTCString();
 
-  if (!config.apiKey || !config.apiSecret == null) return "Keys are nedded!";
+  if (config.data) {
+    formattedData = JSON.stringify(config.data);
+  }
 
-  if (config.data) formattedData = JSON.stringify(config.data);
-
-  if (config.params)
+  if (config.params) {
     formattedParams = Object.keys(sortParams(config.params))
       .map(
         (key) =>
           key + "=" + encodeURIComponent(config.params[key]).replace(/%20/g, "+")
       )
       .join("&");
+  }
 
   const canonicalString = `${config.apiKey}${formattedDate}${formattedParams}${formattedData}`;
 
@@ -34,27 +133,61 @@ const authorization = (config) => {
 
   auth.Date = `${formattedDate}`;
   auth.Authorization = `IM ${config.apiKey}:${sign}`;
+  auth["X-IM-ORIGIN"] = "IM_SDK_JAVASCRIPT_V4";
 
   console.log(auth);
 
   return auth;
 };
 
-export const request = (data) => {
-  if (data.params) config.params = data.params;
-  if (data.data) config.data = data.data;
+/**
+ * Makes HTTP requests to the API
+ * @param {Object} data - Request data
+ * @returns {Promise<Object>} - API response
+ */
+export const request = async (data) => {
+  try {
+    if (data.params) config.params = data.params;
+    if (data.data) config.data = data.data;
 
-  const auth = authorization(config);
+    const auth = authorization(config);
 
-  console.log("3. Send request");
-  return axios({
-    method: data.type,
-    url: `${config.url}${data.endpoint}`,
-    data: data.data,
-    params: data.params,
-    headers: {
-      Date: auth.Date,
-      Authorization: auth.Authorization,
-    },
-  });
+    console.log("3. Send request");
+    const response = await axios({
+      method: data.type,
+      url: `${config.url}${data.endpoint}`,
+      data: data.data,
+      params: data.params,
+      headers: {
+        "Content-Type": "application/json",
+        Date: auth.Date,
+        Authorization: auth.Authorization,
+        "X-IM-ORIGIN": auth["X-IM-ORIGIN"],
+      },
+      timeout: 30000, // 30 seconds timeout
+    });
+
+    return {
+      code: response.status,
+      status: response.statusText,
+      ok: response.status >= 200 && response.status < 300,
+      data: response.data,
+      headers: response.headers,
+    };
+  } catch (error) {
+    console.error("Request failed:", error.message);
+    
+    if (error.response) {
+      return {
+        code: error.response.status,
+        status: error.response.statusText,
+        ok: false,
+        data: error.response.data,
+        headers: error.response.headers,
+        error: error.message,
+      };
+    }
+    
+    throw new Error(`Request failed: ${error.message}`);
+  }
 };
