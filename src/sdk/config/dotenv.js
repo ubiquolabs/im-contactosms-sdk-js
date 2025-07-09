@@ -5,10 +5,11 @@ import "dotenv";
  */
 
 // Export config object for direct access
+// Use getters to ensure the values are read from process.env at access time, not at module load time.
 export const config = {
-  apiKey: process.env.API_KEY,
-  apiSecret: process.env.API_SECRET,
-  url: process.env.URL,
+  get apiKey() { return process.env.API_KEY; },
+  get apiSecret() { return process.env.API_SECRET; },
+  get url() { return process.env.URL; },
 };
 
 /**
@@ -18,15 +19,15 @@ export const config = {
  * @param {string} url - API URL
  */
 export const setConfig = (apiKey, apiSecret, url) => {
-  config = {
-    apiKey: apiKey || process.env.API_KEY,
-    apiSecret: apiSecret || process.env.API_SECRET,
-    url: url || process.env.URL,
-  };
+  // This function should set the process.env variables so the getters can pick them up.
+  if (apiKey) process.env.API_KEY = apiKey;
+  if (apiSecret) process.env.API_SECRET = apiSecret;
+  if (url) process.env.URL = url;
+
 
   // Ensure URL ends with slash
-  if (config.url && !config.url.endsWith('/')) {
-    config.url = config.url + '/';
+  if (process.env.URL && !process.env.URL.endsWith('/')) {
+    process.env.URL = process.env.URL + '/';
   }
 };
 

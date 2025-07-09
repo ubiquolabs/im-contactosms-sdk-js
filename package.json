@@ -2,12 +2,12 @@
   "name": "im-csms-sdk-javascript-v4",
   "version": "2.0.0",
   "description": "JavaScript SDK v4 for SMS API with enhanced features",
-  "main": "src/index.js",
+  "main": "src/sdk/SmsApi.js",
   "type": "module",
   "scripts": {
-    "dev": "node src/index.js",
-    "test": "node src/examples/test.js",
-    "start": "node src/index.js"
+    "dev": "node src/test-original.js",
+    "test": "node src/test-original.js",
+    "start": "node src/test-original.js"
   },
   "keywords": ["sms", "api", "sdk", "javascript", "messaging"],
   "author": "",
