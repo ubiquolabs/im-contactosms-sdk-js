@@ -71,7 +71,7 @@ const tagsExample = async () => {
       console.log("❌ Failed to remove tag from contact:", removeTag.error);
     }
 
-    // 6. Get contact groups (alternative to tags)
+    // 6. Get contact groups
     console.log("\n6. Getting contact groups...");
     const contactGroups = await api.contacts.getContactGroups("50212345678");
     
@@ -82,48 +82,10 @@ const tagsExample = async () => {
       console.log("❌ Failed to get contact groups:", contactGroups.error);
     }
 
-    // 7. Try to create a tag (not supported by API)
-    console.log("\n7. Trying to create a tag (not supported)...");
-    const createTag = await api.tags.createTag({
-      name: "Test Tag",
-      shortName: "test",
-      description: "Test tag description",
-    });
-    
-    if (createTag.ok) {
-      console.log("✅ Tag created successfully");
-    } else {
-      console.log("❌ Tag creation failed (expected):", createTag.error);
-    }
 
-    // 8. Try to update a tag (not supported by API)
-    console.log("\n8. Trying to update a tag (not supported)...");
-    const updateTag = await api.tags.updateTag("contactos1", {
-      name: "Updated Tag Name",
-      description: "Updated description",
-    });
-    
-    if (updateTag.ok) {
-      console.log("✅ Tag updated successfully");
-    } else {
-      console.log("❌ Tag update failed (expected):", updateTag.error);
-    }
 
-    // 9. Try to add multiple contacts to tag (not supported by API)
-    console.log("\n9. Trying to add multiple contacts to tag (not supported)...");
-    const addMultiple = await api.tags.addContactsToTag("customers", [
-      "50212345678",
-      "50287654321",
-    ]);
-    
-    if (addMultiple.ok) {
-      console.log("✅ Multiple contacts added to tag successfully");
-    } else {
-      console.log("❌ Multiple contacts addition failed (expected):", addMultiple.error);
-    }
-
-    // 10. Delete a tag (if it exists)
-    console.log("\n10. Deleting a tag...");
+    // 7. Delete a tag (if it exists)
+    console.log("\n7. Deleting a tag...");
     const deleteTag = await api.tags.deleteTag("test-tag");
     
     if (deleteTag.ok) {
@@ -133,8 +95,7 @@ const tagsExample = async () => {
     }
 
     console.log("\n✨ Tags example completed!");
-    console.log("\n📝 Note: Tag creation, updates, and bulk operations are not supported by this API.");
-    console.log("   Tags are managed through individual contact operations only.");
+    console.log("\n📝 Note: Tags are managed through individual contact operations only.");
 
   } catch (error) {
     console.error("❌ Error in tags example:", error.message);

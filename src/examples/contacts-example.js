@@ -38,6 +38,7 @@ const contactsExample = async () => {
       countryCode: "502",
       firstName: "John",
       lastName: "Doe",
+      customField1: "Test contact",
     });
     
     if (newContact.ok) {
@@ -63,6 +64,7 @@ const contactsExample = async () => {
     const updatedContact = await api.contacts.updateContact("50212345678", {
       firstName: "Jane",
       lastName: "Smith",
+      customField1: "Updated contact",
     });
     
     if (updatedContact.ok) {
@@ -72,7 +74,7 @@ const contactsExample = async () => {
       console.log("❌ Failed to update contact:", updatedContact.error);
     }
 
-    // 5. Get contact groups (alternative to tags)
+    // 5. Get contact groups
     console.log("\n5. Getting contact groups...");
     const contactGroups = await api.contacts.getContactGroups("50212345678");
     

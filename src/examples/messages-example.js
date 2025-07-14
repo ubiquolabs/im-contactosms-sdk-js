@@ -13,20 +13,20 @@ const messagesExample = async () => {
   console.log("========================");
 
   try {
-    // 1. List messages with filters
-    console.log("\n1. Listing messages...");
-    const messages = await api.messages.listMessages({
+    // 1. Get delivery reports
+    console.log("\n1. Getting delivery reports...");
+    const deliveryReports = await api.messages.getDeliveryReports({
       startDate: "2025-07-01",
-      endDate: "2025-07-04",
+      endDate: "2025-07-14",
       limit: 10,
       direction: "MT", // Outgoing messages
     });
     
-    if (messages.ok) {
-      console.log(`✅ Found ${messages.data?.length || 0} messages`);
-      console.log("Sample messages:", messages.data?.slice(0, 2));
+    if (deliveryReports.ok) {
+      console.log(`✅ Found ${deliveryReports.data?.length || 0} delivery reports`);
+      console.log("Sample reports:", deliveryReports.data?.slice(0, 2));
     } else {
-      console.log("❌ Failed to list messages:", messages.error);
+      console.log("❌ Failed to get delivery reports:", deliveryReports.error);
     }
 
     // 2. Send message to a specific contact
@@ -80,50 +80,22 @@ const messagesExample = async () => {
       console.log("❌ Failed to send messages to multiple contacts:", sendToMultiple.error);
     }
 
-    // 5. Get message status by ID (if we have a message ID)
-    if (sendToContact.ok && sendToContact.data?.message_id) {
-      console.log("\n5. Getting message status...");
-      const messageStatus = await api.messages.getMessageStatus(sendToContact.data.message_id);
-      
-      if (messageStatus.ok) {
-        console.log("✅ Message status retrieved successfully");
-        console.log("Message status:", messageStatus.data);
-      } else {
-        console.log("❌ Failed to get message status:", messageStatus.error);
-      }
-    }
-
-    // 6. Get delivery reports (using messages list with delivery status)
-    console.log("\n6. Getting delivery reports...");
-    const deliveryReports = await api.messages.listMessages({
-      startDate: "2025-07-01",
-      endDate: "2025-07-04",
-      limit: 10,
-      delivery_status_enable: true,
-    });
-    
-    if (deliveryReports.ok) {
-      console.log("✅ Delivery reports retrieved successfully");
-      console.log(`   Found ${deliveryReports.data?.length || 0} messages with delivery status`);
-      console.log("Sample reports:", deliveryReports.data?.slice(0, 2));
-    } else {
-      console.log("❌ Failed to get delivery reports:", deliveryReports.error);
-    }
-
-    // 7. List incoming messages (MO)
-    console.log("\n7. Listing incoming messages...");
-    const incomingMessages = await api.messages.listMessages({
-      startDate: "2025-07-01",
-      endDate: "2025-07-04",
+    // 5. Get delivery reports with different filters
+    console.log("\n5. Getting delivery reports with filters...");
+    const filteredReports = await api.messages.getDeliveryReports({
+      startDate: "2025-07-10",
+      endDate: "2025-07-14",
       limit: 5,
-      direction: "MO", // Incoming messages
+      direction: "MT",
+      msisdn: "50431400448", // Filter by specific MSISDN
     });
     
-    if (incomingMessages.ok) {
-      console.log("✅ Incoming messages retrieved successfully");
-      console.log(`   Found ${incomingMessages.data?.length || 0} incoming messages`);
+    if (filteredReports.ok) {
+      console.log("✅ Filtered delivery reports retrieved successfully");
+      console.log(`   Found ${filteredReports.data?.length || 0} reports for MSISDN 50431400448`);
+      console.log("Sample filtered reports:", filteredReports.data?.slice(0, 2));
     } else {
-      console.log("❌ Failed to get incoming messages:", incomingMessages.error);
+      console.log("❌ Failed to get filtered delivery reports:", filteredReports.error);
     }
 
     console.log("\n✨ Messages example completed!");

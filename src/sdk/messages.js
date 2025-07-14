@@ -173,57 +173,7 @@ export const Messages = {
     }
   },
 
-  /**
-   * Get message status by ID (if endpoint exists)
-   * @param {string|number} messageId - Message ID
-   * @returns {Promise<Object>} - API response
-   */
-  getMessageStatus: async (messageId) => {
-    try {
-      if (!messageId) {
-        throw new Error("Message ID is required");
-      }
 
-      // Try to get message status from messages list
-      const today = new Date().toISOString().split('T')[0];
-      const messages = await request({
-        type: "get",
-        endpoint: "messages",
-        params: {
-          start_date: today,
-          end_date: today,
-          limit: 100,
-        },
-      });
-
-      if (messages.ok && messages.data) {
-        const message = messages.data.find(m => m.id === messageId);
-        if (message) {
-          return {
-            code: 200,
-            status: "OK",
-            ok: true,
-            data: {
-              id: messageId,
-              status: message.status || 'UNKNOWN',
-              delivered: message.status === 'DELIVERED',
-              timestamp: message.timestamp || message.created_at,
-            },
-          };
-        }
-      }
-
-      return {
-        code: 404,
-        status: "Not Found",
-        ok: false,
-        data: { error: "Message not found" },
-      };
-    } catch (error) {
-      console.error("Error getting message status:", error.message);
-      throw error;
-    }
-  },
 
   /**
    * Get message delivery reports (using messages endpoint)
@@ -267,9 +217,16 @@ export const Messages = {
       if (response.ok && response.data) {
         const reports = response.data.map(message => ({
           msisdn: message.msisdn,
-          status: message.status || 'UNKNOWN',
-          timestamp: message.timestamp || message.created_at,
-          message_id: message.id,
+          status: message.status || message.message_status || 'UNKNOWN',
+          timestamp: message.timestamp || message.created_at || message.created_on,
+          message_id: message.id || message.message_id || message.client_message_id,
+          // Additional fields that might be available
+          direction: message.direction,
+          short_code: message.short_code,
+          created_by: message.created_by,
+          // Legacy fields
+          sms_sent: message.sms_sent,
+          sms_message: message.sms_message,
         }));
 
         return {
