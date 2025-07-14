@@ -1,4 +1,4 @@
-# JavaScript SMS API SDK v4
+# JavaScript SMS API SDK
 
 A modern, feature-rich JavaScript SDK for interacting with the SMS API service. This SDK provides easy-to-use methods for managing contacts, sending messages, and handling tags with enhanced functionality and improved error handling.
 

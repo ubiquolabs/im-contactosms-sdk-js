@@ -1,7 +1,7 @@
 {
   "name": "im-csms-sdk-javascript-v4",
-  "version": "2.0.0",
-  "description": "JavaScript SDK v4 for SMS API with enhanced features",
+  "version": "1.0.0",
+  "description": "JavaScript SDK for SMS API with enhanced features",
   "main": "src/sdk/SmsApi.js",
   "type": "module",
   "scripts": {
