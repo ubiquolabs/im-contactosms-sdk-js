@@ -110,7 +110,10 @@ const authorization = (requestConfig) => {
   const formattedDate = new Date().toUTCString();
 
   if (requestConfig.data) {
+    // Use JSON.stringify without escaping UTF-8 characters
     formattedData = JSON.stringify(requestConfig.data);
+    // Note: JavaScript doesn't have a direct equivalent to Python's ensure_ascii=False
+    // The encoding issue is typically handled at the HTTP request level
   }
 
   if (requestConfig.params) {
@@ -165,7 +168,7 @@ export const request = async (data) => {
       data: data.data,
       params: data.params,
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json; charset=utf-8",
         Date: auth.Date,
         Authorization: auth.Authorization,
         "X-IM-ORIGIN": auth["X-IM-ORIGIN"],
