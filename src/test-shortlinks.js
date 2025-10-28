@@ -1,238 +1,624 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import crypto from 'crypto';
 
+// Load environment variables
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-import { SmsApi } from './sdk/SmsApi.js';
+// Import SDK for REST calls with HMAC auth
+import { request } from './sdk/helper.js';
 
-const api = new SmsApi(
-  process.env.API_KEY,
-  process.env.API_SECRET,
-  process.env.URL
-);
+// Configuración de la API desde .env
+const API_BASE_URL = process.env.URL || 'https:URL/api/rest';
 
-console.log("Testing Shortlinks API SDK");
-console.log("=============================");
+const ACCOUNTS = [
+  { 
+    name: "Account from ENV", 
+    apiKey: process.env.API_KEY, 
+    apiSecret: process.env.API_SECRET 
+  }
+];
 
+console.log("TEST SHORTLINK API");
+console.log("==========================");
+console.log(`URL: ${API_BASE_URL}short_link`);
+console.log(`API Keys configuradas: ${ACCOUNTS.length}`);
+ACCOUNTS.forEach((account, index) => {
+  console.log(`   ${index + 1}. ${account.name} - API Key: ${account.apiKey?.slice(0, 8)}...`);
+});
+console.log("Objetivo: Crear shortlinks via POST con autenticación HMAC-SHA1");
+console.log("");
+
+// Función para generar URLs de prueba
 const getRandomLongUrl = () => {
   const baseUrls = [
-    "https://www.example.com/very-long-url-with-parameters-and-filters",
-    "https://www.google.com/search?q=test+shortlink+api+production+usage",
-    "https://www.github.com/user/repository/very-long-path/with-many/parameters",
+    "https://www.ejemplo.com/mi-pagina-muy-larga-con-parametros",
+    "https://www.google.com/search?q=test+shortlink+api+local+development",
+    "https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=PLrAXtmRdnEQy6nuLMOVdJmC2_8q1uJ",
+    "https://www.amazon.com/producto-super-largo-con-muchos-parametros-y-filtros",
+    "https://www.facebook.com/groups/comunidad-desarrolladores-guatemala/posts/123456789",
+    "https://www.github.com/usuario/repositorio-muy-largo/commits/abc123def456ghi789",
+    "https://www.stackoverflow.com/questions/123456/como-crear-shortlinks-con-api-rest",
+    "https://www.linkedin.com/in/perfil-profesional-desarrollador-guatemala",
+    "https://www.twitter.com/usuario/status/1234567890123456789",
+    "https://www.instagram.com/p/ABC123DEF456GHI789JKL/"
   ];
+  
   return baseUrls[Math.floor(Math.random() * baseUrls.length)];
 };
 
+// Función para generar nombres de prueba
 const getRandomName = () => {
   const names = [
-    "Test Shortlink from SDK",
-    "Production Test Link",
-    "SDK Generated Link",
+    "Test Shortlink desde REST API",
+    "Enlace corto de prueba",
+    "Shortlink para testing",
+    "Link de desarrollo local",
+    "Prueba API Shortlink",
+    "Test desde Node.js",
+    "Shortlink automático",
+    "Enlace de prueba local",
+    "Test API REST",
+    "Shortlink generado automáticamente"
   ];
+  
   return names[Math.floor(Math.random() * names.length)];
 };
 
-const testCreateShortlink = async (longUrl, name) => {
-  try {
-    console.log("\nTesting create shortlink...");
-    
-    const response = await api.shortlinks.createShortlink({
-      long_url: longUrl || getRandomLongUrl(),
-      name: name || getRandomName(),
-      status: "ACTIVE"
-    });
-    
-    console.log("Shortlink created successfully!");
-    console.log("Status:", response.status);
-    console.log("Code:", response.code);
-    console.log("OK:", response.ok);
-    
-    if (response.data && response.data.url_id) {
-      console.log("\nShortlink details:");
-      console.log("  ID:", response.data.url_id);
-      console.log("  Name:", response.data.name);
-      console.log("  Short URL:", response.data.short_url);
-      console.log("  Long URL:", response.data.long_url);
-      console.log("  Status:", response.data.status);
-      console.log("  Created:", response.data.created_on);
-    }
-    
-    return response;
-  } catch (error) {
-    console.log("Error creating shortlink:", error.message);
-    if (error.response?.data) {
-      console.log("Error details:", error.response.data);
-    }
-    return null;
-  }
+// Función para generar status
+const getRandomStatus = () => {
+  const statuses = ["ACTIVE", "INACTIVE"];
+  return statuses[Math.floor(Math.random() * statuses.length)];
 };
 
-const testListShortlinks = async (startDate, endDate, limit, offset) => {
+// Función para enviar POST request CON AUTENTICACIÓN HMAC
+const createShortlink = async (account, longUrl, name, status) => {
   try {
-    console.log("\nTesting list shortlinks...");
-    
-    const params = {
-      limit: limit || 10,
+    const payload = {
+      long_url: longUrl,
+      name: name,
+      status: status
     };
+
+    console.log(`${account.name} - Enviando POST request con HMAC auth...`);
+    console.log(`   API Key: ${account.apiKey.slice(0, 9)}...`);
+    console.log(`   URL: ${longUrl}`);
+    console.log(`   Name: ${name}`);
+    console.log(`   Status: ${status}`);
+    console.log("");
+
+    // Configurar las credenciales en process.env para el helper
+    process.env.API_KEY = account.apiKey;
+    process.env.API_SECRET = account.apiSecret;
+    process.env.URL = API_BASE_URL;
     
-    if (startDate) params.start_date = startDate;
-    if (endDate) params.end_date = endDate;
-    if (offset !== undefined) params.offset = offset;
-    
-    const response = await api.shortlinks.listShortlinks(params);
-    
-    console.log("List shortlinks response:");
-    console.log("Status:", response.status);
-    console.log("Code:", response.code);
-    console.log("OK:", response.ok);
-    console.log("Count:", response.data?.data ? response.data.data.length : 0);
-    
-    if (response.data && response.data.data && response.data.data.length > 0) {
-      console.log("\nShortlinks:");
-      response.data.data.slice(0, 3).forEach((shortlink, index) => {
-        console.log(`  ${index + 1}. ${shortlink.name || shortlink.url_id}`);
-        console.log(`     Short URL: ${shortlink.short_url}`);
-        console.log(`     Visits: ${shortlink.visits || 0}`);
-        console.log(`     Status: ${shortlink.status}`);
-      });
+    // Usar el SDK request function para enviar con HMAC
+    const response = await request({
+      type: 'post',
+      endpoint: 'short_link',
+      data: payload
+    });
+
+    if (response.ok) {
+      console.log("SUCCESS!");
+      console.log(`   Status: ${response.code}`);
+      console.log(`   Response:`, JSON.stringify(response.data, null, 2));
+      console.log("");
+
+      return {
+        success: true,
+        account: account.name,
+        status: response.code,
+        data: response.data
+      };
+    } else {
+      console.log("ERROR!");
+      console.log(`   Status: ${response.code}`);
+      console.log(`   Error:`, JSON.stringify(response.data, null, 2));
+      console.log("");
+
+      return {
+        success: false,
+        account: account.name,
+        status: response.code,
+        data: response.data
+      };
     }
-    
-    return response;
+
   } catch (error) {
-    console.log("Error listing shortlinks:", error.message);
-    throw error;
+    console.log("ERROR!");
+    console.log(`   Error: ${error.message}`);
+    console.log("   Check if server is running");
+    console.log("");
+
+    return {
+      success: false,
+      account: account.name,
+      error: error.message,
+      status: null,
+      data: null
+    };
   }
 };
 
-const testGetShortlinkById = async (id) => {
-  try {
-    console.log("\nTesting get shortlink by ID...");
-    
-    if (!id) {
-      console.log("Shortlink ID is required");
-      return null;
-    }
-    
-    const response = await api.shortlinks.getShortlinkById(id);
-    
-    console.log("Shortlink found:");
-    console.log("Status:", response.status);
-    console.log("Code:", response.code);
-    
-    if (response.data && response.data.url_id) {
-      console.log("\nShortlink details:");
-      console.log("  ID:", response.data.url_id);
-      console.log("  Name:", response.data.name);
-      console.log("  Short URL:", response.data.short_url);
-      console.log("  Long URL:", response.data.long_url);
-      console.log("  Status:", response.data.status);
-      console.log("  Created:", response.data.created_on);
-      console.log("  Visits:", response.data.visits || 0);
-      console.log("  Unique Visits:", response.data.unique_visits || 0);
-    }
-    
-    return response;
-  } catch (error) {
-    console.log("Error getting shortlink:", error.message);
-    if (error.response?.data) {
-      console.log("Error details:", error.response.data);
-    }
-    return null;
+// Función para test individual
+const testSingleShortlink = async () => {
+  console.log("TEST INDIVIDUAL SHORTLINK");
+  console.log("=============================");
+  
+  // Seleccionar cuenta aleatoria
+  const account = ACCOUNTS[Math.floor(Math.random() * ACCOUNTS.length)];
+  const longUrl = getRandomLongUrl();
+  const name = getRandomName();
+  const status = getRandomStatus();
+  
+  console.log(`Cuenta: ${account.name}`);
+  console.log(`URL: ${longUrl}`);
+  console.log("");
+  
+  const result = await createShortlink(account, longUrl, name, status);
+  
+  if (result.success) {
+    console.log(`Test individual ${account.name} exitoso!`);
+  } else {
+    console.log(`Test individual ${account.name} falló!`);
   }
+  
+  return result;
 };
 
-const testUpdateShortlinkStatus = async (id, newStatus) => {
-  try {
-    console.log("\nTesting update shortlink status...");
+// Función para test múltiple
+const testMultipleShortlinks = async (count = 5) => {
+  console.log(`TEST MULTIPLE SHORTLINKS (${count} requests)`);
+  console.log("================================================");
+  
+  const results = {
+    success: 0,
+    error: 0,
+    total: count
+  };
+  const accountStats = {};
+  
+  // Inicializar estadísticas por cuenta
+  ACCOUNTS.forEach(account => {
+    accountStats[account.name] = {
+      total: 0,
+      success: 0,
+      error: 0
+    };
+  });
+  
+  for (let i = 1; i <= count; i++) {
+    console.log(`\nRequest #${i}/${count}`);
+    console.log("-".repeat(30));
     
-    if (!id) {
-      console.log("Shortlink ID is required");
-      return null;
+    // Seleccionar cuenta aleatoria
+    const account = ACCOUNTS[Math.floor(Math.random() * ACCOUNTS.length)];
+    const longUrl = getRandomLongUrl();
+    const name = getRandomName();
+    const status = getRandomStatus();
+    
+    console.log(`Cuenta: ${account.name}`);
+    
+    const result = await createShortlink(account, longUrl, name, status);
+    
+    // Actualizar estadísticas
+    accountStats[account.name].total++;
+    if (result.success) {
+      results.success++;
+      accountStats[account.name].success++;
+    } else {
+      results.error++;
+      accountStats[account.name].error++;
     }
     
-    if (!newStatus) {
-      console.log("New status is required (ACTIVE or INACTIVE)");
-      return null;
+    // Pausa entre requests
+    if (i < count) {
+      console.log("Esperando 2 segundos...");
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
-    
-    const response = await api.shortlinks.updateShortlinkStatus(id, newStatus);
-    
-    console.log("Shortlink status updated:");
-    console.log("Status:", response.status);
-    console.log("Code:", response.code);
-    
-    if (response.data && response.data.url_id) {
-      console.log("\nUpdated shortlink:");
-      console.log("  ID:", response.data.url_id);
-      console.log("  New Status:", response.data.status);
-      console.log("  Short URL:", response.data.short_url);
-    }
-    
-    return response;
-  } catch (error) {
-    console.log("Error updating shortlink:", error.message);
-    if (error.response?.data) {
-      console.log("Error details:", error.response.data);
-    }
-    return null;
   }
+  
+  console.log("\nRESUMEN FINAL");
+  console.log("================");
+  console.log(`Exitosos: ${results.success}`);
+  console.log(`Errores: ${results.error}`);
+  console.log(`Total: ${results.total}`);
+  console.log(`Tasa de éxito: ${((results.success / results.total) * 100).toFixed(1)}%`);
+  
+  console.log(`\nESTADISTICAS POR CUENTA:`);
+  Object.entries(accountStats).forEach(([account, stats]) => {
+    if (stats.total > 0) {
+      console.log(`\n   ${account}:`);
+      console.log(`     Total: ${stats.total}`);
+      console.log(`     Exitosos: ${stats.success}`);
+      console.log(`     Errores: ${stats.error}`);
+      console.log(`     Tasa: ${((stats.success / stats.total) * 100).toFixed(1)}%`);
+    }
+  });
+  
+  return results;
 };
 
-const runTests = async () => {
-  try {
-    await testListShortlinks();
-    await testCreateShortlink();
-    console.log("\nAll tests completed successfully!");
-  } catch (error) {
-    console.log("\nTest sequence failed:", error.message);
-  }
-};
-
+// Verificar argumentos de línea de comandos
 const args = process.argv.slice(2);
 const command = args[0];
 
-if (command === "create") {
-  const longUrl = args[1] || getRandomLongUrl();
-  const name = args[2] || getRandomName();
-  testCreateShortlink(longUrl, name);
+const testStatusValidation = async () => {
+  console.log("TEST VALIDACION DE STATUS");
+  console.log("============================");
+  
+  const account = ACCOUNTS[0];
+  const longUrl = getRandomLongUrl();
+  const name = "Test Status Validation";
+  
+  const invalidStatuses = ["PENDING", "DRAFT", "DELETED", "SUSPENDED", "active", "inactive", "Active", "Inactive", "ACTIVE ", " INACTIVE", "ACTIVE\n", "INACTIVE\t"];
+  
+  for (const status of invalidStatuses) {
+    console.log(`\nProbando status inválido: "${status}"`);
+    await createShortlink(account, longUrl, `${name} - ${status}`, status);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+  
+  console.log(`\nProbando status válido: "ACTIVE"`);
+  await createShortlink(account, longUrl, `${name} - ACTIVE`, "ACTIVE");
+  
+  console.log(`\nProbando status válido: "INACTIVE"`);
+  await createShortlink(account, longUrl, `${name} - INACTIVE`, "INACTIVE");
+  
+  console.log(`\nProbando sin status (debería default a ACTIVE)`);
+  await createShortlink(account, longUrl, `${name} - No Status`, null);
+};
+
+const testListShortlinks = async () => {
+  console.log("TEST LISTA DE SHORTLINKS");
+  console.log("===========================");
+  
+  const account = ACCOUNTS[0];
+  console.log(`Usando cuenta: ${account.name}`);
+  console.log(`Endpoint: GET ${API_BASE_URL}short_link/`);
+  console.log("");
+  
+  try {
+    process.env.API_KEY = account.apiKey;
+    process.env.API_SECRET = account.apiSecret;
+    process.env.URL = API_BASE_URL;
+    
+    const response = await request({
+      type: 'GET',
+      endpoint: 'short_link/',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log("RESPUESTA EXITOSA:");
+    console.log("====================");
+    console.log(`Status: ${response.status}`);
+    console.log(`Success: ${response.data.success}`);
+    console.log(`Message: ${response.data.message}`);
+    console.log(`Account ID: ${response.data.account_id}`);
+    
+    if (response.data.data && response.data.data.length > 0) {
+      console.log(`Shortlinks encontrados: ${response.data.data.length}`);
+      console.log("");
+      console.log("LISTA DE SHORTLINKS:");
+      console.log("=======================");
+      
+      response.data.data.forEach((shortlink, index) => {
+        console.log(`${index + 1}. ID: ${shortlink._id || shortlink.url_id}`);
+        console.log(`   Name: ${shortlink.name}`);
+        console.log(`   Short URL: ${shortlink.short_url}`);
+        console.log(`   Long URL: ${shortlink.long_url || shortlink.url}`);
+        console.log(`   Status: ${shortlink.status}`);
+        console.log(`   Created By: ${shortlink.created_by}`);
+        console.log(`   Created On: ${shortlink.created_on}`);
+        console.log(`   Visits: ${shortlink.visits}`);
+        console.log(`   Unique Visits: ${shortlink.unique_visits}`);
+        console.log(`   Preview Visits: ${shortlink.preview_visits}`);
+        console.log("");
+      });
+    } else {
+      console.log("No se encontraron shortlinks para esta cuenta");
+    }
+    
+  } catch (error) {
+    console.log("ERROR:");
+    console.log("=========");
+    if (error.response) {
+      console.log(`Status: ${error.response.status}`);
+      console.log(`Message: ${error.response.data?.message || 'Error desconocido'}`);
+      console.log(`Response:`, JSON.stringify(error.response.data, null, 2));
+    } else {
+      console.log(`Error: ${error.message}`);
+    }
+  }
+};
+
+
+const testGetShortlinkById = async (shortLinkId = "id123") => {
+  console.log("TEST SHORTLINK POR ID");
+  console.log("========================");
+  
+  const account = ACCOUNTS[0];
+  console.log(`Usando cuenta: ${account.name}`);
+  console.log(`Endpoint: GET ${API_BASE_URL}short_link/?id=${shortLinkId}`);
+  console.log(`Shortlink ID: ${shortLinkId}`);
+  console.log("");
+  
+  try {
+    process.env.API_KEY = account.apiKey;
+    process.env.API_SECRET = account.apiSecret;
+    process.env.URL = API_BASE_URL;
+
+    const response = await request({
+      type: 'GET',
+      endpoint: 'short_link/',
+      params: {
+        id: shortLinkId
+      },
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log("RESPUESTA EXITOSA:");
+    console.log("====================");
+    console.log(`Status: ${response.status}`);
+    console.log(`Success: ${response.data.success}`);
+    console.log(`Message: ${response.data.message}`);
+    console.log(`Account ID: ${response.data.account_id}`);
+    
+    console.log("");
+    console.log("DEBUG - RESPUESTA COMPLETA:");
+    console.log("===============================");
+    console.log(JSON.stringify(response.data, null, 2));
+    console.log("");
+    
+    if (response.data.url_id) {
+      console.log("");
+      console.log("DETALLES DEL SHORTLINK:");
+      console.log("==========================");
+      console.log(`ID: ${response.data.url_id}`);
+      console.log(`Name: ${response.data.name}`);
+      console.log(`Short URL: ${response.data.short_url}`);
+      console.log(`Long URL: ${response.data.long_url}`);
+      console.log(`Status: ${response.data.status}`);
+      console.log(`Created By: ${response.data.created_by}`);
+      console.log(`Created On: ${response.data.created_on}`);
+      
+      console.log("");
+      console.log("ESTADISTICAS DE VISITAS:");
+      console.log("===========================");
+      console.log(`Total Visits: ${response.data.visits}`);
+      console.log(`Unique Visits: ${response.data.unique_visits}`);
+      console.log(`Preview Visits: ${response.data.preview_visits}`);
+    }
+    
+  } catch (error) {
+    console.log("ERROR:");
+    console.log("=========");
+    if (error.response) {
+      console.log(`Status: ${error.response.status}`);
+      console.log(`Message: ${error.response.data?.message || 'Error desconocido'}`);
+      console.log(`Response:`, JSON.stringify(error.response.data, null, 2));
+    } else {
+      console.log(`Error: ${error.message}`);
+    }
+  }
+};
+
+const testListShortlinksByDate = async (startDate = null, endDate = null, limit = 10, offset = -6) => {
+  console.log("TEST LISTAR SHORTLINKS POR FECHA");
+  console.log("====================================");
+  
+  const account = ACCOUNTS[0];
+  console.log(`Usando cuenta: ${account.name}`);
+  console.log(`Endpoint: GET ${API_BASE_URL}short_link/`);
+  console.log(`Fecha inicio: ${startDate || 'No especificada'}`);
+  console.log(`Fecha fin: ${endDate || 'No especificada'}`);
+  console.log(`Límite: ${limit}`);
+  console.log(`Offset: ${offset} horas`);
+  console.log("");
+  
+  try {
+    process.env.API_KEY = account.apiKey;
+    process.env.API_SECRET = account.apiSecret;
+    process.env.URL = API_BASE_URL;
+
+    const params = {};
+    if (startDate) params.start_date = startDate;
+    if (endDate) params.end_date = endDate;
+    if (limit) params.limit = limit;
+    if (offset !== -6) params.offset = offset;
+
+    const response = await request({
+      type: 'GET',
+      endpoint: 'short_link/',
+      params: params,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log("RESPUESTA EXITOSA:");
+    console.log("====================");
+    console.log(`Status: ${response.status}`);
+    console.log(`Success: ${response.data.success}`);
+    console.log(`Message: ${response.data.message}`);
+    console.log(`Account ID: ${response.data.account_id}`);
+    
+    console.log("");
+    console.log("DEBUG - RESPUESTA COMPLETA:");
+    console.log("===============================");
+    console.log(JSON.stringify(response.data, null, 2));
+    console.log("");
+    
+    if (response.data.data && response.data.data.length > 0) {
+      console.log("");
+      console.log(`SHORTLINKS ENCONTRADOS (${response.data.data.length}):`);
+      console.log("===============================================");
+      
+      response.data.data.forEach((shortlink, index) => {
+        const offsetHours = offset || -6;
+        console.log(`\n${index + 1}. ${shortlink.name}`);
+        console.log(`   ID: ${shortlink._id}`);
+        console.log(`   Short URL: ${shortlink.short_url}`);
+        console.log(`   Long URL: ${shortlink.long_url}`);
+        console.log(`   Status: ${shortlink.status}`);
+        console.log(`   Created: ${shortlink.created_on} (Hora local UTC${offsetHours >= 0 ? '+' : ''}${offsetHours})`);
+        console.log(`   Created By: ${shortlink.created_by}`);
+        
+        console.log(`   Estadísticas:`);
+        console.log(`      Total Visits: ${shortlink.visits}`);
+        console.log(`      Unique Visits: ${shortlink.unique_visits}`);
+        console.log(`      Preview Visits: ${shortlink.preview_visits}`);
+      });
+    } else {
+      console.log("No se encontraron shortlinks con los criterios especificados");
+    }
+    
+  } catch (error) {
+    console.log("ERROR:");
+    console.log("=========");
+    if (error.response) {
+      console.log(`Status: ${error.response.status}`);
+      console.log(`Message: ${error.response.data?.message || 'Error desconocido'}`);
+      console.log(`Response:`, JSON.stringify(error.response.data, null, 2));
+    } else {
+      console.log(`Error: ${error.message}`);
+    }
+  }
+};
+
+const testUpdateShortlinkStatus = async (shortLinkId = "id123", newStatus = "INACTIVE") => {
+  console.log("TEST ACTUALIZAR STATUS DE SHORTLINK");
+  console.log("=====================================");
+  
+  const account = ACCOUNTS[0];
+  console.log(`Usando cuenta: ${account.name}`);
+  console.log(`Endpoint: PUT ${API_BASE_URL}short_link/${shortLinkId}/status`);
+  console.log(`Shortlink ID: ${shortLinkId}`);
+  console.log(`Nuevo Status: ${newStatus}`);
+  console.log("");
+  
+  try {
+    process.env.API_KEY = account.apiKey;
+    process.env.API_SECRET = account.apiSecret;
+    process.env.URL = API_BASE_URL;
+
+    const response = await request({
+      type: 'PUT',
+      endpoint: `short_link/${shortLinkId}/status`,
+      params: {
+        id: shortLinkId
+      },
+      data: {
+        status: newStatus
+      },
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log("RESPUESTA EXITOSA:");
+    console.log("====================");
+    console.log(`Status: ${response.status}`);
+    console.log(`Success: ${response.data.success}`);
+    console.log(`Message: ${response.data.message}`);
+    console.log(`Account ID: ${response.data.account_id}`);
+    
+    console.log("");
+    console.log("DEBUG - RESPUESTA COMPLETA:");
+    console.log("===============================");
+    console.log(JSON.stringify(response.data, null, 2));
+    console.log("");
+    
+    if (response.data.url_id) {
+      console.log("");
+      console.log("DETALLES DEL SHORTLINK ACTUALIZADO:");
+      console.log("======================================");
+      console.log(`ID: ${response.data.url_id}`);
+      console.log(`Name: ${response.data.name}`);
+      console.log(`Short URL: ${response.data.short_url}`);
+      console.log(`Long URL: ${response.data.long_url}`);
+      console.log(`Status: ${response.data.status} <- ACTUALIZADO`);
+      console.log(`Created By: ${response.data.created_by}`);
+      console.log(`Created On: ${response.data.created_on}`);
+      
+      console.log("");
+      console.log("ESTADISTICAS DE VISITAS:");
+      console.log("===========================");
+      console.log(`Total Visits: ${response.data.visits}`);
+      console.log(`Unique Visits: ${response.data.unique_visits}`);
+      console.log(`Preview Visits: ${response.data.preview_visits}`);
+    }
+    
+  } catch (error) {
+    console.log("ERROR:");
+    console.log("=========");
+    if (error.response) {
+      console.log(`Status: ${error.response.status}`);
+      console.log(`Message: ${error.response.data?.message || 'Error desconocido'}`);
+      console.log(`Response:`, JSON.stringify(error.response.data, null, 2));
+    } else {
+      console.log(`Error: ${error.message}`);
+    }
+  }
+};
+
+if (command === "single") {
+  testSingleShortlink();
+} else if (command === "multiple") {
+  const count = parseInt(args[1]) || 5;
+  testMultipleShortlinks(count);
+} else if (command === "status") {
+  testStatusValidation();
 } else if (command === "list") {
+  testListShortlinks();
+} else if (command === "id") {
+  const shortLinkId = args[1] || "id123";
+  testGetShortlinkById(shortLinkId);
+} else if (command === "update") {
+  const shortLinkId = args[1] || "id123";
+  const newStatus = args[2] || "INACTIVE";
+  testUpdateShortlinkStatus(shortLinkId, newStatus);
+} else if (command === "date") {
   const startDate = args[1] || null;
   const endDate = args[2] || null;
   const limit = parseInt(args[3]) || 10;
-  const offset = args[4] !== undefined ? parseInt(args[4]) : undefined;
-  testListShortlinks(startDate, endDate, limit, offset);
-} else if (command === "id") {
-  const shortLinkId = args[1];
-  if (!shortLinkId) {
-    console.log("Shortlink ID is required");
-    console.log("Usage: node src/test-shortlinks.js id <shortlink_id>");
-  } else {
-    testGetShortlinkById(shortLinkId);
-  }
-} else if (command === "update") {
-  const shortLinkId = args[1];
-  const newStatus = args[2];
-  if (!shortLinkId || !newStatus) {
-    console.log("Shortlink ID and status are required");
-    console.log("Usage: node src/test-shortlinks.js update <shortlink_id> <ACTIVE|INACTIVE>");
-  } else {
-    testUpdateShortlinkStatus(shortLinkId, newStatus);
-  }
+  const offset = parseInt(args[4]) || -6;
+  testListShortlinksByDate(startDate, endDate, limit, offset);
 } else {
-  console.log("Usage:");
-  console.log("  node src/test-shortlinks.js                      - Run basic tests");
-  console.log("  node src/test-shortlinks.js create               - Create a shortlink");
-  console.log("  node src/test-shortlinks.js list                 - List shortlinks");
-  console.log("  node src/test-shortlinks.js list 2024-01-01      - List from date");
-  console.log("  node src/test-shortlinks.js list 2024-01-01 2024-12-31 - List between dates");
-  console.log("  node src/test-shortlinks.js list 2024-01-01 2024-12-31 20 - List with limit");
-  console.log("  node src/test-shortlinks.js list 2024-01-01 2024-12-31 20 -5 - List with timezone (NYC)");
-  console.log("  node src/test-shortlinks.js id <id>              - Get shortlink by ID");
-  console.log("  node src/test-shortlinks.js update <id> ACTIVE   - Update status");
+  console.log("SHORTLINK API TEST");
+  console.log("====================");
+  console.log("");
+  console.log("Uso:");
+  console.log("  node src/test-shortlinks.js single     - Test individual");
+  console.log("  node src/test-shortlinks.js multiple   - Test múltiple (5 requests)");
+  console.log("  node src/test-shortlinks.js multiple 10 - Test múltiple (10 requests)");
+  console.log("  node src/test-shortlinks.js status     - Test validación de status");
+  console.log("  node src/test-shortlinks.js list       - Test lista de shortlinks (GET)");
+  console.log("  node src/test-shortlinks.js id        - Test shortlink por ID (GET con query param)");
+  console.log("  node src/test-shortlinks.js id id123   - Test shortlink por ID específico");
+  console.log("  node src/test-shortlinks.js update    - Test actualizar status (PUT)");
+  console.log("  node src/test-shortlinks.js update id123 ACTIVE - Test actualizar status específico");
+  console.log("  node src/test-shortlinks.js date      - Test lista por fecha (últimos 10)");
+  console.log("  node src/test-shortlinks.js date 2024-01-01 - Test lista desde fecha específica");
+  console.log("  node src/test-shortlinks.js date 2024-01-01 2024-12-31 - Test lista entre fechas");
+  console.log("  node src/test-shortlinks.js date 2024-01-01 2024-12-31 20 - Test lista entre fechas con límite");
+  console.log("  node src/test-shortlinks.js date 2024-01-01 2024-12-31 20 -5 - Test con timezone New York");
+  console.log("");
+  console.log("Ejemplo de uso:");
+  console.log("  node src/test-shortlinks.js single");
+  console.log("  node src/test-shortlinks.js list");
+  console.log("  node src/test-shortlinks.js id id123");
+  console.log("  node src/test-shortlinks.js update id123 ACTIVE");
+  console.log("  node src/test-shortlinks.js date 2024-01-01 2024-12-31 20 -5");
   console.log("");
   
-  runTests();
+  testSingleShortlink();
 }

@@ -29,12 +29,10 @@ export const Shortlinks = {
       const requestParams = {};
       
       if (params.start_date) {
-        validateDate(params.start_date, true);
         requestParams.start_date = params.start_date;
       }
       
       if (params.end_date) {
-        validateDate(params.end_date, true);
         requestParams.end_date = params.end_date;
       }
       

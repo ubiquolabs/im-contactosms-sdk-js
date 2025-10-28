@@ -291,15 +291,95 @@ const shortlink = await api.shortlinks.createShortlink({
 const updated = await api.shortlinks.updateShortlinkStatus("abc123", "INACTIVE");
 ```
 
+### API Response Examples
+
+#### Create Shortlink - Success
+```json
+{
+  "success": true,
+  "message": "Shortlink created successfully",
+  "account_id": 12345,
+  "url_id": "123ABC",
+  "short_url": "https://shorturl-pais.com/123ABC",
+  "long_url": "https://www.example.com/very-long-url-with-parameters"
+}
+```
+
+#### List Shortlinks - Success
+```json
+{
+  "success": true,
+  "message": "Shortlinks retrieved successfully",
+  "data": [
+    {
+      "_id": "123ABC",
+      "account_uid": "abcde12345678kklm",
+      "name": "Enlace corto de prueba",
+      "status": "INACTIVE",
+      "base_url": "https://shorturl-pais.com/",
+      "short_url": "https://shorturl-pais.com/123ABC",
+      "long_url": "https://www.example.com/long-url-here",
+      "visits": 0,
+      "unique_visits": 0,
+      "preview_visits": 0,
+      "created_by": "SHORTLINK_API",
+      "reference_type": "SHORT_LINK",
+      "expiration": false,
+      "expiration_date": null,
+      "created_on": 1735689600000
+    }
+  ],
+  "account_id": 12345
+}
+```
+
+#### Get Shortlink by ID - Success
+```json
+{
+  "success": true,
+  "message": "Shortlink found",
+  "account_id": 12345,
+  "url_id": "123ABC",
+  "short_url": "https://shorturl-pais.com/123ABC",
+  "long_url": "https://www.example.com/long-url-with-parameters",
+  "name": "Example Shortlink",
+  "status": "ACTIVE",
+  "visits": 0,
+  "unique_visits": 0,
+  "preview_visits": 0,
+  "created_by": "SHORTLINK_API",
+  "created_on": 1735689600000
+}
+```
+
+#### Get Shortlink by ID - Not Found
+```json
+{
+  "success": false,
+  "message": "Shortlink not found"
+}
+```
+
+#### Rate Limit Exceeded
+When you create too many shortlinks in a short time window (default: 10 per minute per account):
+```json
+{
+  "code": 42900,
+  "error": "Ha excedido el límite de solicitudes. Intente nuevamente más tarde"
+}
+```
+
 ## Testing
 
-Before running examples or tests, ensure you have created a `.env` file in the root directory with your API credentials:
+Before running examples or tests, **you must create a `.env` file** in the `im-contactosms-sdk-js` directory with your API credentials:
 
 ```env
-API_KEY=your_api_key_here
-API_SECRET=your_api_secret_here
-URL=https://your-api-url.com/api/v4/
+API_KEY=your_actual_api_key
+API_SECRET=your_actual_api_secret
+URL=https://your-api-url.com/api/rest/
 ```
+
+**Important:** The `.env` file is not included in the repository for security reasons. You need to create it manually before running any tests or examples.
 
 ### Run Tests
 
@@ -316,9 +396,10 @@ node src/test-shortlinks.js
 # Run shortlinks tests with options
 node src/test-shortlinks.js create
 node src/test-shortlinks.js list
+node src/test-shortlinks.js date 2024-01-01
+node src/test-shortlinks.js date 2024-01-01 2024-12-31 20 -6
 node src/test-shortlinks.js id <shortlink_id>
 node src/test-shortlinks.js update <shortlink_id> ACTIVE
-node src/test-shortlinks.js list 2024-01-01 2024-12-31 20 -6
 ```
 
 ## Examples
