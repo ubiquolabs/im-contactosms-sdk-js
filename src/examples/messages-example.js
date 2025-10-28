@@ -9,7 +9,7 @@ const api = new SmsApi(
 );
 
 const messagesExample = async () => {
-  console.log("💬 Messages API Examples");
+  console.log("Messages API Examples");
   console.log("========================");
 
   try {
@@ -23,10 +23,10 @@ const messagesExample = async () => {
     });
     
     if (deliveryReports.ok) {
-      console.log(`✅ Found ${deliveryReports.data?.length || 0} delivery reports`);
+      console.log(`Success: Found ${deliveryReports.data?.length || 0} delivery reports`);
       console.log("Sample reports:", deliveryReports.data?.slice(0, 2));
     } else {
-      console.log("❌ Failed to get delivery reports:", deliveryReports.error);
+      console.log("Error: Failed to get delivery reports:", deliveryReports.error);
     }
 
     // 2. Send message to a specific contact
@@ -38,10 +38,10 @@ const messagesExample = async () => {
     });
     
     if (sendToContact.ok) {
-      console.log("✅ Message sent successfully to contact");
+      console.log("Success: Message sent successfully to contact");
       console.log("Message details:", sendToContact.data);
     } else {
-      console.log("❌ Failed to send message to contact:", sendToContact.error);
+      console.log("Error: Failed to send message to contact:", sendToContact.error);
     }
 
     // 3. Send message to tags/groups
@@ -53,10 +53,10 @@ const messagesExample = async () => {
     });
     
     if (sendToTags.ok) {
-      console.log("✅ Message sent successfully to tags");
+      console.log("Success: Message sent successfully to tags");
       console.log("Message details:", sendToTags.data);
     } else {
-      console.log("❌ Failed to send message to tags:", sendToTags.error);
+      console.log("Error: Failed to send message to tags:", sendToTags.error);
     }
 
     // 4. Send message to multiple contacts
@@ -68,7 +68,7 @@ const messagesExample = async () => {
     });
     
     if (sendToMultiple.ok) {
-      console.log("✅ Messages sent successfully to multiple contacts");
+      console.log("Success: Messages sent successfully to multiple contacts");
       console.log(`   Total: ${sendToMultiple.data.total}`);
       console.log(`   Successful: ${sendToMultiple.data.success}`);
       console.log(`   Failed: ${sendToMultiple.data.failed}`);
@@ -77,7 +77,7 @@ const messagesExample = async () => {
         console.log("   Results:", sendToMultiple.data.results.slice(0, 2));
       }
     } else {
-      console.log("❌ Failed to send messages to multiple contacts:", sendToMultiple.error);
+      console.log("Error: Failed to send messages to multiple contacts:", sendToMultiple.error);
     }
 
     // 5. Get delivery reports with different filters
@@ -87,21 +87,21 @@ const messagesExample = async () => {
       endDate: "2025-07-14",
       limit: 5,
       direction: "MT",
-      msisdn: "50431400448", // Filter by specific MSISDN
+      msisdn: "50212345678", // Filter by specific MSISDN
     });
     
     if (filteredReports.ok) {
-      console.log("✅ Filtered delivery reports retrieved successfully");
-      console.log(`   Found ${filteredReports.data?.length || 0} reports for MSISDN 50431400448`);
+      console.log("Success: Filtered delivery reports retrieved successfully");
+      console.log(`   Found ${filteredReports.data?.length || 0} reports for MSISDN 50212345678`);
       console.log("Sample filtered reports:", filteredReports.data?.slice(0, 2));
     } else {
-      console.log("❌ Failed to get filtered delivery reports:", filteredReports.error);
+      console.log("Error: Failed to get filtered delivery reports:", filteredReports.error);
     }
 
-    console.log("\n✨ Messages example completed!");
+    console.log("\n Messages example completed!");
 
   } catch (error) {
-    console.error("❌ Error in messages example:", error.message);
+    console.error("Error: Error in messages example:", error.message);
   }
 };
 

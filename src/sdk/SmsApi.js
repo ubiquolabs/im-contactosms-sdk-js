@@ -1,6 +1,7 @@
 import { Messages } from "./messages.js";
 import { Contacts } from "./contacts.js";
 import { Tags } from "./tags.js";
+import { Shortlinks } from "./shortlinks.js";
 
 /**
  * Main SMS API class that provides access to all API resources
@@ -25,6 +26,7 @@ export class SmsApi {
     this._contacts = null;
     this._messages = null;
     this._tags = null;
+    this._shortlinks = null;
   }
 
   /**
@@ -58,6 +60,17 @@ export class SmsApi {
       this._tags = Tags;
     }
     return this._tags;
+  }
+
+  /**
+   * Get shortlinks resource
+   * @returns {Object} Shortlinks API methods
+   */
+  get shortlinks() {
+    if (!this._shortlinks) {
+      this._shortlinks = Shortlinks;
+    }
+    return this._shortlinks;
   }
 
   /**
