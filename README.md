@@ -1,23 +1,24 @@
 # JavaScript SMS API SDK
 
-A modern, feature-rich JavaScript SDK for interacting with the SMS API service. This SDK provides easy-to-use methods for managing contacts, sending messages, and handling tags with enhanced functionality and improved error handling.
+A modern, feature-rich JavaScript SDK for interacting with the SMS API service. This SDK provides easy-to-use methods for managing contacts, sending messages, handling tags, and creating shortlinks with enhanced functionality and improved error handling.
 
-## 🚀 Features
+## Features
 
 - **Complete Contact Management**: Create, read, update, delete contacts with custom fields
 - **Advanced Message Handling**: Send to individuals, groups, tags, and bulk messaging
 - **Tag Management**: Create, manage, and organize contacts with tags
+- **Shortlink Management**: Create, list, update shortlinks with statistics
 - **Robust Error Handling**: Comprehensive validation and error reporting
 - **Modern JavaScript**: ES6+ features with async/await support
 - **Type Safety**: JSDoc documentation for better development experience
 - **Easy Integration**: Simple setup and intuitive API design
 
-## 📋 Requirements
+## Requirements
 
 - Node.js 16.0 or higher
 - npm or yarn package manager
 
-## 🛠️ Installation
+## Installation
 
 1. Clone or download this repository
 2. Install dependencies:
@@ -25,7 +26,7 @@ A modern, feature-rich JavaScript SDK for interacting with the SMS API service. 
 npm install
 ```
 
-## ⚙️ Configuration
+## Configuration
 
 Create a `.env` file in the root directory with your API credentials:
 
@@ -35,7 +36,7 @@ API_SECRET=your_api_secret_here
 URL=https://your-api-url.com/api/v4/
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Basic Usage
 
@@ -61,7 +62,7 @@ console.log(connection.success ? "Connected!" : "Connection failed");
 // Send to a specific contact
 const response = await api.messages.sendToContact({
   msisdn: "50212345678",
-  message: "Hello from JavaScript SDK v4! 🚀",
+  message: "Hello from JavaScript SDK",
   id: "unique-message-id"
 });
 
@@ -88,7 +89,21 @@ if (contact.ok) {
 }
 ```
 
-## 📚 API Reference
+### Create a Shortlink
+
+```javascript
+const shortlink = await api.shortlinks.createShortlink({
+  long_url: "https://www.example.com/very-long-url-with-parameters",
+  name: "My Shortlink",
+  status: "ACTIVE"
+});
+
+if (shortlink.ok) {
+  console.log("Shortlink created:", shortlink.data.short_url);
+}
+```
+
+## API Reference
 
 ### Contacts
 
@@ -96,7 +111,7 @@ if (contact.ok) {
 ```javascript
 const contacts = await api.contacts.listContacts({
   limit: 10,
-  status: "SUSCRIBED",
+  status: "SUBSCRIBED",
   query: "search term"
 });
 ```
@@ -219,7 +234,7 @@ const tag = await api.tags.getTag("vip");
 ```javascript
 const contacts = await api.tags.getTagContacts("vip", {
   limit: 10,
-  status: "SUSCRIBED"
+  status: "SUBSCRIBED"
 });
 ```
 
@@ -245,7 +260,68 @@ await api.tags.removeContactsFromTag("vip", ["50212345678"]);
 const deleted = await api.tags.deleteTag("vip");
 ```
 
-## 🧪 Examples
+### Shortlinks
+
+#### List Shortlinks
+```javascript
+const shortlinks = await api.shortlinks.listShortlinks({
+  start_date: "2024-01-01",
+  end_date: "2024-12-31",
+  limit: 10,
+  offset: -6 // UTC timezone offset (e.g., -6 for Central America)
+});
+```
+
+#### Get Shortlink by ID
+```javascript
+const shortlink = await api.shortlinks.getShortlinkById("abc123");
+```
+
+#### Create Shortlink
+```javascript
+const shortlink = await api.shortlinks.createShortlink({
+  long_url: "https://www.example.com/very-long-url",
+  name: "My Shortlink",
+  status: "ACTIVE" // or "INACTIVE"
+});
+```
+
+#### Update Shortlink Status
+```javascript
+const updated = await api.shortlinks.updateShortlinkStatus("abc123", "INACTIVE");
+```
+
+## Testing
+
+Before running examples or tests, ensure you have created a `.env` file in the root directory with your API credentials:
+
+```env
+API_KEY=your_api_key_here
+API_SECRET=your_api_secret_here
+URL=https://your-api-url.com/api/v4/
+```
+
+### Run Tests
+
+```bash
+# Run main test suite (delivery reports and messaging)
+node src/test.js
+
+# Run original structure test (messages and contacts)
+node src/test-original.js
+
+# Run shortlinks test suite
+node src/test-shortlinks.js
+
+# Run shortlinks tests with options
+node src/test-shortlinks.js create
+node src/test-shortlinks.js list
+node src/test-shortlinks.js id <shortlink_id>
+node src/test-shortlinks.js update <shortlink_id> ACTIVE
+node src/test-shortlinks.js list 2024-01-01 2024-12-31 20 -6
+```
+
+## Examples
 
 Run the included examples to see the SDK in action:
 
@@ -257,9 +333,10 @@ npm run dev
 node src/examples/contacts-example.js
 node src/examples/messages-example.js
 node src/examples/tags-example.js
+node src/examples/shortlinks-example.js
 ```
 
-## 📊 Response Format
+## Response Format
 
 All API methods return a consistent response format:
 
@@ -274,7 +351,7 @@ All API methods return a consistent response format:
 }
 ```
 
-## 🔧 Error Handling
+## Error Handling
 
 The SDK includes comprehensive error handling:
 
@@ -292,7 +369,7 @@ try {
 }
 ```
 
-## 🚀 Advanced Usage
+## Advanced Usage
 
 ### Connection Testing
 ```javascript
@@ -326,7 +403,7 @@ for (const contactData of contacts) {
 }
 ```
 
-## 🔄 Migration from v1
+## Migration from v1
 
 If you're upgrading from the previous version:
 
@@ -348,7 +425,7 @@ const api = new SmsApi(apiKey, apiSecret, apiUrl);
 const response = await api.messages.sendToContact({ msisdn, message });
 ```
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -356,26 +433,29 @@ const response = await api.messages.sendToContact({ msisdn, message });
 4. Add tests if applicable
 5. Submit a pull request
 
-## 📄 License
+## License
 
 This project is licensed under the ISC License.
 
-## 🆘 Support
+## Support
 
 For support and questions:
 - Check the examples in the `src/examples/` directory
 - Review the API documentation
 - Open an issue on GitHub
 
-## 🔄 Changelog
+## Changelog
 
 ### v2.0.0
-- ✨ Complete rewrite with modern JavaScript features
-- 🆕 Added comprehensive tag management
-- 🔧 Enhanced error handling and validation
-- 📚 Improved documentation and examples
-- 🚀 Better performance and reliability
-- 🏗️ Modular architecture with unified API class
+- Added shortlink management functionality
+- Added list, get, create, and update shortlinks methods
+- Added timezone offset support for shortlink queries
+- Improved error handling
 
 ### v1.0.0
-- 🎉 Initial release with basic messaging and contact functionality
+- Complete rewrite with modern JavaScript features
+- Added comprehensive tag management
+- Enhanced error handling and validation
+- Improved documentation and examples
+- Better performance and reliability
+- Modular architecture with unified API class
