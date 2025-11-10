@@ -21,10 +21,20 @@ const runExample = async () => {
     const shortlink = await api.shortlinks.createShortlink({
       long_url: "https://www.example.com/very-long-url-with-many-parameters",
       name: "Example Shortlink",
+      alias: "ExampleAlias01",
       status: "ACTIVE"
     });
 
     console.log("Created shortlink:", shortlink.data);
+
+    const customAliasShortlink = await api.shortlinks.createShortlinkWithAlias({
+      long_url: "https://www.example.com/special-offer",
+      alias: "SpecialOffer01",
+      name: "Special Offer Shortlink",
+      status: "INACTIVE"
+    });
+
+    console.log("Created shortlink with custom alias:", customAliasShortlink.data);
 
     const shortlinks = await api.shortlinks.listShortlinks({ 
       limit: 10,

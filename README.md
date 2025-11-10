@@ -7,11 +7,27 @@ A modern, feature-rich JavaScript SDK for interacting with the SMS API service. 
 - **Complete Contact Management**: Create, read, update, delete contacts with custom fields
 - **Advanced Message Handling**: Send to individuals, groups, tags, and bulk messaging
 - **Tag Management**: Create, manage, and organize contacts with tags
-- **Shortlink Management**: Create, list, update shortlinks with statistics
+- **Shortlink Management**: Create, list, update shortlinks with statistics and custom aliases
 - **Robust Error Handling**: Comprehensive validation and error reporting
 - **Modern JavaScript**: ES6+ features with async/await support
 - **Type Safety**: JSDoc documentation for better development experience
 - **Easy Integration**: Simple setup and intuitive API design
+
+## Rate Limits
+
+The API has rate limits to ensure fair usage:
+
+- **Shortlinks**: Maximum of 10 shortlinks created per minute per account (default)
+- When you exceed the limit, you'll receive a 403 error with code `42900`
+- **For inquiries or requests to increase the limit**: Please contact Technical Support directly through their support channels
+
+Example error response:
+```json
+{
+  "code": 42900,
+  "error": "Ha excedido el límite de solicitudes. Intente nuevamente más tarde"
+}
+```
 
 ## Requirements
 
@@ -95,12 +111,15 @@ if (contact.ok) {
 const shortlink = await api.shortlinks.createShortlink({
   long_url: "https://www.example.com/very-long-url-with-parameters",
   name: "My Shortlink",
+  alias: "promo2025",
   status: "ACTIVE"
 });
 
 if (shortlink.ok) {
   console.log("Shortlink created:", shortlink.data.short_url);
 }
+
+Alias is optional; when provided it must be at most 30 characters and cannot contain spaces. If you skip it the platform generates a token automatically.
 ```
 
 ## API Reference
@@ -282,9 +301,27 @@ const shortlink = await api.shortlinks.getShortlinkById("abc123");
 const shortlink = await api.shortlinks.createShortlink({
   long_url: "https://www.example.com/very-long-url",
   name: "My Shortlink",
+  alias: "campaign2025",
   status: "ACTIVE" // or "INACTIVE"
 });
 ```
+
+#### Create Shortlink With Custom Alias
+```javascript
+const shortlinkWithAlias = await api.shortlinks.createShortlinkWithAlias({
+  long_url: "https://www.example.com/limited-offer",
+  alias: "promoBlackFriday",
+  name: "Black Friday Promo",
+  status: "ACTIVE"
+});
+
+// The API will persist the exact alias you provide
+console.log(shortlinkWithAlias.data.alias); // "promoBlackFriday"
+```
+
+> **Alias rules:** 1–30 printable characters, no spaces. Provide a custom alias only when you need a predictable slug; otherwise omit it and the platform will auto-generate one.
+> Re-using the same alias on the same domain returns `500 Bad Request` from the ShortURL API.
+> Shortlinks can be deactivated but **not** reactivated. The backend rejects `ACTIVE` status updates.
 
 #### Update Shortlink Status
 ```javascript
@@ -301,6 +338,7 @@ const updated = await api.shortlinks.updateShortlinkStatus("abc123", "INACTIVE")
   "account_id": 12345,
   "url_id": "123ABC",
   "short_url": "https://shorturl-pais.com/123ABC",
+  "alias": "promo2025",
   "long_url": "https://www.example.com/very-long-url-with-parameters"
 }
 ```
@@ -318,6 +356,7 @@ const updated = await api.shortlinks.updateShortlinkStatus("abc123", "INACTIVE")
       "status": "INACTIVE",
       "base_url": "https://shorturl-pais.com/",
       "short_url": "https://shorturl-pais.com/123ABC",
+      "alias": "promo2025",
       "long_url": "https://www.example.com/long-url-here",
       "visits": 0,
       "unique_visits": 0,
@@ -341,6 +380,7 @@ const updated = await api.shortlinks.updateShortlinkStatus("abc123", "INACTIVE")
   "account_id": 12345,
   "url_id": "123ABC",
   "short_url": "https://shorturl-pais.com/123ABC",
+  "alias": "promo2025",
   "long_url": "https://www.example.com/long-url-with-parameters",
   "name": "Example Shortlink",
   "status": "ACTIVE",
@@ -390,16 +430,44 @@ node src/test.js
 # Run original structure test (messages and contacts)
 node src/test-original.js
 
-# Run shortlinks test suite
+# Run shortlinks test suite (default: list + create)
 node src/test-shortlinks.js
 
-# Run shortlinks tests with options
+# Create a shortlink
 node src/test-shortlinks.js create
+
+# Create a shortlink with a custom alias (optional alias parameter)
+node src/test-shortlinks.js single myCustomAlias
+
+# List all shortlinks (no parameters)
 node src/test-shortlinks.js list
-node src/test-shortlinks.js date 2024-01-01
-node src/test-shortlinks.js date 2024-01-01 2024-12-31 20 -6
-node src/test-shortlinks.js id <shortlink_id>
-node src/test-shortlinks.js update <shortlink_id> ACTIVE
+
+# List by date range
+node src/test-shortlinks.js date 2025-01-01
+
+# List by date range with end date
+node src/test-shortlinks.js date 2025-01-01 2025-12-31
+
+# List by date with limit
+node src/test-shortlinks.js date 2025-01-01 2025-12-31 20
+
+# List by date with limit and offset (timezone)
+node src/test-shortlinks.js date 2025-01-01 2025-12-31 20 -6
+
+# Get shortlink by ID
+node src/test-shortlinks.js id 123ABC
+
+# Update shortlink status (requires shortlink ID)
+node src/test-shortlinks.js update 123ABC ACTIVE
+
+# Test status validation
+node src/test-shortlinks.js status
+
+# Test multiple shortlinks
+node src/test-shortlinks.js multiple
+
+# Test multiple shortlinks with count
+node src/test-shortlinks.js multiple 10
 ```
 
 ## Examples

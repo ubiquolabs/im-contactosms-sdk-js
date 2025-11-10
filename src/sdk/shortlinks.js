@@ -88,27 +88,72 @@ export const Shortlinks = {
    * Create a new shortlink
    * @param {Object} shortlinkData - Shortlink data
    * @param {string} shortlinkData.long_url - Original long URL
-   * @param {string} shortlinkData.name - Shortlink name
-   * @param {string} shortlinkData.status - Status (ACTIVE, INACTIVE)
+   * @param {string} [shortlinkData.name] - Optional shortlink name (max 50 chars)
+   * @param {string} [shortlinkData.alias] - Optional alias without spaces (max 30 chars)
+   * @param {string} [shortlinkData.status] - Status (ACTIVE, INACTIVE)
    * @returns {Promise<Object>} - API response
    */
-  createShortlink: async (shortlinkData) => {
+  createShortlink: async (shortlinkData = {}) => {
     try {
-      const { long_url, name, status } = shortlinkData;
+      const { long_url, name, status, alias } = shortlinkData;
 
       if (!long_url) {
         throw new Error("long_url is required");
       }
 
-      if (status && !["ACTIVE", "INACTIVE"].includes(status)) {
+      let normalizedStatus = status || "ACTIVE";
+      if (typeof normalizedStatus === "string") {
+        normalizedStatus = normalizedStatus.trim().toUpperCase();
+      }
+
+      if (!["ACTIVE", "INACTIVE"].includes(normalizedStatus)) {
         throw new Error("Status must be ACTIVE or INACTIVE");
+      }
+
+      let normalizedName = null;
+      if (name !== undefined && name !== null) {
+        if (typeof name !== "string") {
+          throw new Error("name must be a string");
+        }
+        normalizedName = name.trim();
+        if (normalizedName.length === 0) {
+          normalizedName = null;
+        } else if (normalizedName.length > 50) {
+          throw new Error("name must be 50 characters or fewer");
+        }
+      }
+
+      let normalizedAlias = null;
+      if (alias !== undefined && alias !== null) {
+        if (typeof alias !== "string") {
+          throw new Error("alias must be a string");
+        }
+        normalizedAlias = alias.trim();
+        if (normalizedAlias.length === 0) {
+          throw new Error("alias cannot be empty");
+        }
+        if (normalizedAlias.length > 30) {
+          throw new Error("alias must be 30 characters or fewer");
+        }
+        if (/\s/.test(normalizedAlias)) {
+          throw new Error("alias cannot contain spaces");
+        }
       }
 
       const body = {
         long_url,
-        name: name || null,
-        status: status || "ACTIVE",
+        status: normalizedStatus,
       };
+
+      if (normalizedName !== null) {
+        body.name = normalizedName;
+      } else if (name !== undefined) {
+        body.name = null;
+      }
+
+      if (normalizedAlias !== null) {
+        body.alias = normalizedAlias;
+      }
 
       const response = await request({
         type: "post",
@@ -121,6 +166,34 @@ export const Shortlinks = {
       console.error("Error creating shortlink:", error.message);
       throw error;
     }
+  },
+
+  /**
+   * Create a new shortlink enforcing a custom alias
+   * @param {Object} shortlinkData - Shortlink data
+   * @param {string} shortlinkData.long_url - Original long URL
+   * @param {string} shortlinkData.alias - Required alias (max 30 chars, no spaces)
+   * @param {string} [shortlinkData.name] - Optional shortlink name (max 50 chars)
+   * @param {string} [shortlinkData.status] - Status (ACTIVE, INACTIVE)
+   * @returns {Promise<Object>} - API response
+   */
+  createShortlinkWithAlias: async (shortlinkData = {}) => {
+    const { alias } = shortlinkData;
+
+    if (alias === undefined || alias === null) {
+      throw new Error("alias is required");
+    }
+    if (typeof alias !== "string") {
+      throw new Error("alias must be a string");
+    }
+    if (alias.trim().length === 0) {
+      throw new Error("alias cannot be empty");
+    }
+
+    return Shortlinks.createShortlink({
+      ...shortlinkData,
+      alias,
+    });
   },
 
   /**
@@ -139,6 +212,10 @@ export const Shortlinks = {
         throw new Error("Status is required and must be ACTIVE or INACTIVE");
       }
 
+      if (status === "ACTIVE") {
+        console.warn("Warning: shortlinks cannot be reactivated; backend will reject ACTIVE requests.");
+      }
+
       const response = await request({
         type: "put",
         endpoint: `short_link/${id}/status`,
@@ -149,6 +226,9 @@ export const Shortlinks = {
       return response;
     } catch (error) {
       console.error("Error updating shortlink status:", error.message);
+      if (error.response?.data?.message) {
+        console.error("Server message:", error.response.data.message);
+      }
       throw error;
     }
   },

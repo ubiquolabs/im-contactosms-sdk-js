@@ -74,20 +74,35 @@ const getRandomStatus = () => {
   return statuses[Math.floor(Math.random() * statuses.length)];
 };
 
+const getRandomAlias = () => {
+  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const length = 6 + Math.floor(Math.random() * 10);
+  let alias = "";
+  for (let i = 0; i < length; i++) {
+    alias += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return alias;
+};
+
 // Función para enviar POST request CON AUTENTICACIÓN HMAC
-const createShortlink = async (account, longUrl, name, status) => {
+const createShortlink = async (account, longUrl, name, status, alias) => {
   try {
     const payload = {
       long_url: longUrl,
-      name: name,
+      name,
       status: status
     };
+
+    if (alias) {
+      payload.alias = alias;
+    }
 
     console.log(`${account.name} - Enviando POST request con HMAC auth...`);
     console.log(`   API Key: ${account.apiKey.slice(0, 9)}...`);
     console.log(`   URL: ${longUrl}`);
     console.log(`   Name: ${name}`);
     console.log(`   Status: ${status}`);
+    console.log(`   Alias: ${alias || "(auto)"}`);
     console.log("");
 
     // Configurar las credenciales en process.env para el helper
@@ -145,7 +160,7 @@ const createShortlink = async (account, longUrl, name, status) => {
 };
 
 // Función para test individual
-const testSingleShortlink = async () => {
+const testSingleShortlink = async (customAlias = null) => {
   console.log("TEST INDIVIDUAL SHORTLINK");
   console.log("=============================");
   
@@ -153,13 +168,14 @@ const testSingleShortlink = async () => {
   const account = ACCOUNTS[Math.floor(Math.random() * ACCOUNTS.length)];
   const longUrl = getRandomLongUrl();
   const name = getRandomName();
-  const status = getRandomStatus();
+  const status = "ACTIVE";
+  const alias = customAlias !== null ? customAlias : (Math.random() < 0.6 ? getRandomAlias() : null);
   
   console.log(`Cuenta: ${account.name}`);
   console.log(`URL: ${longUrl}`);
   console.log("");
   
-  const result = await createShortlink(account, longUrl, name, status);
+  const result = await createShortlink(account, longUrl, name, status, alias);
   
   if (result.success) {
     console.log(`Test individual ${account.name} exitoso!`);
@@ -200,10 +216,11 @@ const testMultipleShortlinks = async (count = 5) => {
     const longUrl = getRandomLongUrl();
     const name = getRandomName();
     const status = getRandomStatus();
+    const alias = Math.random() < 0.6 ? getRandomAlias() : null;
     
     console.log(`Cuenta: ${account.name}`);
     
-    const result = await createShortlink(account, longUrl, name, status);
+    const result = await createShortlink(account, longUrl, name, status, alias);
     
     // Actualizar estadísticas
     accountStats[account.name].total++;
@@ -259,18 +276,18 @@ const testStatusValidation = async () => {
   
   for (const status of invalidStatuses) {
     console.log(`\nProbando status inválido: "${status}"`);
-    await createShortlink(account, longUrl, `${name} - ${status}`, status);
+    await createShortlink(account, longUrl, `${name} - ${status}`, status, null);
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
   
   console.log(`\nProbando status válido: "ACTIVE"`);
-  await createShortlink(account, longUrl, `${name} - ACTIVE`, "ACTIVE");
+  await createShortlink(account, longUrl, `${name} - ACTIVE`, "ACTIVE", null);
   
   console.log(`\nProbando status válido: "INACTIVE"`);
-  await createShortlink(account, longUrl, `${name} - INACTIVE`, "INACTIVE");
+  await createShortlink(account, longUrl, `${name} - INACTIVE`, "INACTIVE", null);
   
   console.log(`\nProbando sin status (debería default a ACTIVE)`);
-  await createShortlink(account, longUrl, `${name} - No Status`, null);
+  await createShortlink(account, longUrl, `${name} - No Status`, null, null);
 };
 
 const testListShortlinks = async () => {
@@ -311,6 +328,7 @@ const testListShortlinks = async () => {
       response.data.data.forEach((shortlink, index) => {
         console.log(`${index + 1}. ID: ${shortlink._id || shortlink.url_id}`);
         console.log(`   Name: ${shortlink.name}`);
+        console.log(`   Alias: ${shortlink.alias || "(auto)"}`);
         console.log(`   Short URL: ${shortlink.short_url}`);
         console.log(`   Long URL: ${shortlink.long_url || shortlink.url}`);
         console.log(`   Status: ${shortlink.status}`);
@@ -384,6 +402,7 @@ const testGetShortlinkById = async (shortLinkId = "id123") => {
       console.log("==========================");
       console.log(`ID: ${response.data.url_id}`);
       console.log(`Name: ${response.data.name}`);
+      console.log(`Alias: ${response.data.alias || "(auto)"}`);
       console.log(`Short URL: ${response.data.short_url}`);
       console.log(`Long URL: ${response.data.long_url}`);
       console.log(`Status: ${response.data.status}`);
@@ -466,6 +485,7 @@ const testListShortlinksByDate = async (startDate = null, endDate = null, limit 
         const offsetHours = offset || -6;
         console.log(`\n${index + 1}. ${shortlink.name}`);
         console.log(`   ID: ${shortlink._id}`);
+        console.log(`   Alias: ${shortlink.alias || "(auto)"}`);
         console.log(`   Short URL: ${shortlink.short_url}`);
         console.log(`   Long URL: ${shortlink.long_url}`);
         console.log(`   Status: ${shortlink.status}`);
@@ -494,7 +514,11 @@ const testListShortlinksByDate = async (startDate = null, endDate = null, limit 
   }
 };
 
-const testUpdateShortlinkStatus = async (shortLinkId = "id123", newStatus = "INACTIVE") => {
+const testUpdateShortlinkStatus = async (shortLinkId, newStatus = "INACTIVE") => {
+  if (!shortLinkId) {
+    console.error("Shortlink ID is required to update status.");
+    return;
+  }
   console.log("TEST ACTUALIZAR STATUS DE SHORTLINK");
   console.log("=====================================");
   
@@ -571,7 +595,8 @@ const testUpdateShortlinkStatus = async (shortLinkId = "id123", newStatus = "INA
 };
 
 if (command === "single") {
-  testSingleShortlink();
+  const aliasArg = args[1] ? args[1].trim() : null;
+  testSingleShortlink(aliasArg && aliasArg.length > 0 ? aliasArg : null);
 } else if (command === "multiple") {
   const count = parseInt(args[1]) || 5;
   testMultipleShortlinks(count);
@@ -583,7 +608,11 @@ if (command === "single") {
   const shortLinkId = args[1] || "id123";
   testGetShortlinkById(shortLinkId);
 } else if (command === "update") {
-  const shortLinkId = args[1] || "id123";
+  if (!args[1]) {
+    console.error("Missing shortlink ID. Usage: node src/test-shortlinks.js update <shortlinkId> [ACTIVE|INACTIVE]");
+    process.exit(1);
+  }
+  const shortLinkId = args[1];
   const newStatus = args[2] || "INACTIVE";
   testUpdateShortlinkStatus(shortLinkId, newStatus);
 } else if (command === "date") {
@@ -597,7 +626,7 @@ if (command === "single") {
   console.log("====================");
   console.log("");
   console.log("Uso:");
-  console.log("  node src/test-shortlinks.js single     - Test individual");
+  console.log("  node src/test-shortlinks.js single [alias]    - Test individual (alias opcional)");
   console.log("  node src/test-shortlinks.js multiple   - Test múltiple (5 requests)");
   console.log("  node src/test-shortlinks.js multiple 10 - Test múltiple (10 requests)");
   console.log("  node src/test-shortlinks.js status     - Test validación de status");
@@ -613,7 +642,7 @@ if (command === "single") {
   console.log("  node src/test-shortlinks.js date 2024-01-01 2024-12-31 20 -5 - Test con timezone New York");
   console.log("");
   console.log("Ejemplo de uso:");
-  console.log("  node src/test-shortlinks.js single");
+  console.log("  node src/test-shortlinks.js single myAlias123");
   console.log("  node src/test-shortlinks.js list");
   console.log("  node src/test-shortlinks.js id id123");
   console.log("  node src/test-shortlinks.js update id123 ACTIVE");
