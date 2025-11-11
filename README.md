@@ -322,6 +322,7 @@ console.log(shortlinkWithAlias.data.alias); // "promoBlackFriday"
 > **Alias rules:** 1–30 printable characters, no spaces. Provide a custom alias only when you need a predictable slug; otherwise omit it and the platform will auto-generate one.
 > Re-using the same alias on the same domain returns `500 Bad Request` from the ShortURL API.
 > Shortlinks can be deactivated but **not** reactivated. The backend rejects `ACTIVE` status updates.
+> Name must be 50 characters or fewer (trimmed). Empty names are ignored.
 
 #### Update Shortlink Status
 ```javascript

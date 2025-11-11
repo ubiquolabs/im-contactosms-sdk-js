@@ -613,7 +613,11 @@ if (command === "single") {
     process.exit(1);
   }
   const shortLinkId = args[1];
-  const newStatus = args[2] || "INACTIVE";
+  const newStatus = (args[2] || "INACTIVE").toUpperCase();
+  if (newStatus === "ACTIVE") {
+    console.error("Shortlinks cannot be reactivated; only INACTIVE is supported.");
+    process.exit(1);
+  }
   testUpdateShortlinkStatus(shortLinkId, newStatus);
 } else if (command === "date") {
   const startDate = args[1] || null;

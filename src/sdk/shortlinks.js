@@ -213,7 +213,7 @@ export const Shortlinks = {
       }
 
       if (status === "ACTIVE") {
-        console.warn("Warning: shortlinks cannot be reactivated; backend will reject ACTIVE requests.");
+        throw new Error("Shortlinks cannot be reactivated; only INACTIVE updates are supported.");
       }
 
       const response = await request({
@@ -233,4 +233,6 @@ export const Shortlinks = {
     }
   },
 };
+
+export default Shortlinks;
 
