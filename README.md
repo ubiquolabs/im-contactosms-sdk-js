@@ -1,23 +1,40 @@
 # JavaScript SMS API SDK
 
-A modern, feature-rich JavaScript SDK for interacting with the SMS API service. This SDK provides easy-to-use methods for managing contacts, sending messages, and handling tags with enhanced functionality and improved error handling.
+A modern, feature-rich JavaScript SDK for interacting with the SMS API service. This SDK provides easy-to-use methods for managing contacts, sending messages, handling tags, and creating shortlinks with enhanced functionality and improved error handling.
 
-## 🚀 Features
+## Features
 
 - **Complete Contact Management**: Create, read, update, delete contacts with custom fields
 - **Advanced Message Handling**: Send to individuals, groups, tags, and bulk messaging
 - **Tag Management**: Create, manage, and organize contacts with tags
+- **Shortlink Management**: Create, list, update shortlinks with statistics and custom aliases
 - **Robust Error Handling**: Comprehensive validation and error reporting
 - **Modern JavaScript**: ES6+ features with async/await support
 - **Type Safety**: JSDoc documentation for better development experience
 - **Easy Integration**: Simple setup and intuitive API design
 
-## 📋 Requirements
+## Rate Limits
+
+The API has rate limits to ensure fair usage:
+
+- **Shortlinks**: Maximum of 10 shortlinks created per minute per account (default)
+- When you exceed the limit, you'll receive a 403 error with code `42900`
+- **For inquiries or requests to increase the limit**: Please contact Technical Support directly through their support channels
+
+Example error response:
+```json
+{
+  "code": 42900,
+  "error": "Ha excedido el límite de solicitudes. Intente nuevamente más tarde"
+}
+```
+
+## Requirements
 
 - Node.js 16.0 or higher
 - npm or yarn package manager
 
-## 🛠️ Installation
+## Installation
 
 1. Clone or download this repository
 2. Install dependencies:
@@ -25,7 +42,7 @@ A modern, feature-rich JavaScript SDK for interacting with the SMS API service. 
 npm install
 ```
 
-## ⚙️ Configuration
+## Configuration
 
 Create a `.env` file in the root directory with your API credentials:
 
@@ -35,7 +52,7 @@ API_SECRET=your_api_secret_here
 URL=https://your-api-url.com/api/v4/
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Basic Usage
 
@@ -61,7 +78,7 @@ console.log(connection.success ? "Connected!" : "Connection failed");
 // Send to a specific contact
 const response = await api.messages.sendToContact({
   msisdn: "50212345678",
-  message: "Hello from JavaScript SDK v4! 🚀",
+  message: "Hello from JavaScript SDK",
   id: "unique-message-id"
 });
 
@@ -88,7 +105,24 @@ if (contact.ok) {
 }
 ```
 
-## 📚 API Reference
+### Create a Shortlink
+
+```javascript
+const shortlink = await api.shortlinks.createShortlink({
+  long_url: "https://www.example.com/very-long-url-with-parameters",
+  name: "My Shortlink",
+  alias: "promo2025",
+  status: "ACTIVE"
+});
+
+if (shortlink.ok) {
+  console.log("Shortlink created:", shortlink.data.short_url);
+}
+
+Alias is optional; when provided it must be at most 30 characters and cannot contain spaces. If you skip it the platform generates a token automatically.
+```
+
+## API Reference
 
 ### Contacts
 
@@ -96,7 +130,7 @@ if (contact.ok) {
 ```javascript
 const contacts = await api.contacts.listContacts({
   limit: 10,
-  status: "SUSCRIBED",
+  status: "SUBSCRIBED",
   query: "search term"
 });
 ```
@@ -219,7 +253,7 @@ const tag = await api.tags.getTag("vip");
 ```javascript
 const contacts = await api.tags.getTagContacts("vip", {
   limit: 10,
-  status: "SUSCRIBED"
+  status: "SUBSCRIBED"
 });
 ```
 
@@ -245,7 +279,199 @@ await api.tags.removeContactsFromTag("vip", ["50212345678"]);
 const deleted = await api.tags.deleteTag("vip");
 ```
 
-## 🧪 Examples
+### Shortlinks
+
+#### List Shortlinks
+```javascript
+const shortlinks = await api.shortlinks.listShortlinks({
+  start_date: "2024-01-01",
+  end_date: "2024-12-31",
+  limit: 10,
+  offset: -6 // UTC timezone offset (e.g., -6 for Central America)
+});
+```
+
+#### Get Shortlink by ID
+```javascript
+const shortlink = await api.shortlinks.getShortlinkById("abc123");
+```
+
+#### Create Shortlink
+```javascript
+const shortlink = await api.shortlinks.createShortlink({
+  long_url: "https://www.example.com/very-long-url",
+  name: "My Shortlink",
+  alias: "campaign2025",
+  status: "ACTIVE" // or "INACTIVE"
+});
+```
+
+#### Create Shortlink With Custom Alias
+```javascript
+const shortlinkWithAlias = await api.shortlinks.createShortlinkWithAlias({
+  long_url: "https://www.example.com/limited-offer",
+  alias: "promoBlackFriday",
+  name: "Black Friday Promo",
+  status: "ACTIVE"
+});
+
+// The API will persist the exact alias you provide
+console.log(shortlinkWithAlias.data.alias); // "promoBlackFriday"
+```
+
+> **Alias rules:** 1–30 printable characters, no spaces. Provide a custom alias only when you need a predictable slug; otherwise omit it and the platform will auto-generate one.
+> Re-using the same alias on the same domain returns `500 Bad Request` from the ShortURL API.
+> Shortlinks can be deactivated but **not** reactivated. The backend rejects `ACTIVE` status updates.
+> Name must be 50 characters or fewer (trimmed). Empty names are ignored.
+
+#### Update Shortlink Status
+```javascript
+const updated = await api.shortlinks.updateShortlinkStatus("abc123", "INACTIVE");
+```
+
+### API Response Examples
+
+#### Create Shortlink - Success
+```json
+{
+  "success": true,
+  "message": "Shortlink created successfully",
+  "account_id": 12345,
+  "url_id": "123ABC",
+  "short_url": "https://shorturl-pais.com/123ABC",
+  "alias": "promo2025",
+  "long_url": "https://www.example.com/very-long-url-with-parameters"
+}
+```
+
+#### List Shortlinks - Success
+```json
+{
+  "success": true,
+  "message": "Shortlinks retrieved successfully",
+  "data": [
+    {
+      "_id": "123ABC",
+      "account_uid": "abcde12345678kklm",
+      "name": "Enlace corto de prueba",
+      "status": "INACTIVE",
+      "base_url": "https://shorturl-pais.com/",
+      "short_url": "https://shorturl-pais.com/123ABC",
+      "alias": "promo2025",
+      "long_url": "https://www.example.com/long-url-here",
+      "visits": 0,
+      "unique_visits": 0,
+      "preview_visits": 0,
+      "created_by": "SHORTLINK_API",
+      "reference_type": "SHORT_LINK",
+      "expiration": false,
+      "expiration_date": null,
+      "created_on": 1735689600000
+    }
+  ],
+  "account_id": 12345
+}
+```
+
+#### Get Shortlink by ID - Success
+```json
+{
+  "success": true,
+  "message": "Shortlink found",
+  "account_id": 12345,
+  "url_id": "123ABC",
+  "short_url": "https://shorturl-pais.com/123ABC",
+  "alias": "promo2025",
+  "long_url": "https://www.example.com/long-url-with-parameters",
+  "name": "Example Shortlink",
+  "status": "ACTIVE",
+  "visits": 0,
+  "unique_visits": 0,
+  "preview_visits": 0,
+  "created_by": "SHORTLINK_API",
+  "created_on": 1735689600000
+}
+```
+
+#### Get Shortlink by ID - Not Found
+```json
+{
+  "success": false,
+  "message": "Shortlink not found"
+}
+```
+
+#### Rate Limit Exceeded
+When you create too many shortlinks in a short time window (default: 10 per minute per account):
+```json
+{
+  "code": 42900,
+  "error": "Ha excedido el límite de solicitudes. Intente nuevamente más tarde"
+}
+```
+
+## Testing
+
+Before running examples or tests, **you must create a `.env` file** in the `im-contactosms-sdk-js` directory with your API credentials:
+
+```env
+API_KEY=your_actual_api_key
+API_SECRET=your_actual_api_secret
+URL=https://your-api-url.com/api/rest/
+```
+
+**Important:** The `.env` file is not included in the repository for security reasons. You need to create it manually before running any tests or examples.
+
+### Run Tests
+
+```bash
+# Run main test suite (delivery reports and messaging)
+node src/test.js
+
+# Run original structure test (messages and contacts)
+node src/test-original.js
+
+# Run shortlinks test suite (default: list + create)
+node src/test-shortlinks.js
+
+# Create a shortlink
+node src/test-shortlinks.js create
+
+# Create a shortlink with a custom alias (optional alias parameter)
+node src/test-shortlinks.js single myCustomAlias
+
+# List all shortlinks (no parameters)
+node src/test-shortlinks.js list
+
+# List by date range
+node src/test-shortlinks.js date 2025-01-01
+
+# List by date range with end date
+node src/test-shortlinks.js date 2025-01-01 2025-12-31
+
+# List by date with limit
+node src/test-shortlinks.js date 2025-01-01 2025-12-31 20
+
+# List by date with limit and offset (timezone)
+node src/test-shortlinks.js date 2025-01-01 2025-12-31 20 -6
+
+# Get shortlink by ID
+node src/test-shortlinks.js id 123ABC
+
+# Update shortlink status (requires shortlink ID)
+node src/test-shortlinks.js update 123ABC ACTIVE
+
+# Test status validation
+node src/test-shortlinks.js status
+
+# Test multiple shortlinks
+node src/test-shortlinks.js multiple
+
+# Test multiple shortlinks with count
+node src/test-shortlinks.js multiple 10
+```
+
+## Examples
 
 Run the included examples to see the SDK in action:
 
@@ -257,9 +483,10 @@ npm run dev
 node src/examples/contacts-example.js
 node src/examples/messages-example.js
 node src/examples/tags-example.js
+node src/examples/shortlinks-example.js
 ```
 
-## 📊 Response Format
+## Response Format
 
 All API methods return a consistent response format:
 
@@ -274,7 +501,7 @@ All API methods return a consistent response format:
 }
 ```
 
-## 🔧 Error Handling
+## Error Handling
 
 The SDK includes comprehensive error handling:
 
@@ -292,7 +519,7 @@ try {
 }
 ```
 
-## 🚀 Advanced Usage
+## Advanced Usage
 
 ### Connection Testing
 ```javascript
@@ -326,7 +553,7 @@ for (const contactData of contacts) {
 }
 ```
 
-## 🔄 Migration from v1
+## Migration from v1
 
 If you're upgrading from the previous version:
 
@@ -348,7 +575,7 @@ const api = new SmsApi(apiKey, apiSecret, apiUrl);
 const response = await api.messages.sendToContact({ msisdn, message });
 ```
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -356,26 +583,29 @@ const response = await api.messages.sendToContact({ msisdn, message });
 4. Add tests if applicable
 5. Submit a pull request
 
-## 📄 License
+## License
 
 This project is licensed under the ISC License.
 
-## 🆘 Support
+## Support
 
 For support and questions:
 - Check the examples in the `src/examples/` directory
 - Review the API documentation
 - Open an issue on GitHub
 
-## 🔄 Changelog
+## Changelog
 
 ### v2.0.0
-- ✨ Complete rewrite with modern JavaScript features
-- 🆕 Added comprehensive tag management
-- 🔧 Enhanced error handling and validation
-- 📚 Improved documentation and examples
-- 🚀 Better performance and reliability
-- 🏗️ Modular architecture with unified API class
+- Added shortlink management functionality
+- Added list, get, create, and update shortlinks methods
+- Added timezone offset support for shortlink queries
+- Improved error handling
 
 ### v1.0.0
-- 🎉 Initial release with basic messaging and contact functionality
+- Complete rewrite with modern JavaScript features
+- Added comprehensive tag management
+- Enhanced error handling and validation
+- Improved documentation and examples
+- Better performance and reliability
+- Modular architecture with unified API class

@@ -12,7 +12,7 @@ const api = new SmsApi(
  * Complete example of contact management operations
  */
 const contactsExample = async () => {
-  console.log("📞 Contacts API Examples");
+  console.log("Contacts API Examples");
   console.log("=======================");
 
   try {
@@ -25,10 +25,10 @@ const contactsExample = async () => {
     });
     
     if (contacts.ok) {
-      console.log(`✅ Found ${contacts.data?.length || 0} contacts`);
+      console.log(`Success: Found ${contacts.data?.length || 0} contacts`);
       console.log("Sample contacts:", contacts.data?.slice(0, 2));
     } else {
-      console.log("❌ Failed to list contacts:", contacts.error);
+      console.log("Error: Failed to list contacts:", contacts.error);
     }
 
     // 2. Create a new contact
@@ -42,10 +42,10 @@ const contactsExample = async () => {
     });
     
     if (newContact.ok) {
-      console.log("✅ Contact created successfully");
+      console.log("Success: Contact created successfully");
       console.log("Contact data:", newContact.data);
     } else {
-      console.log("❌ Failed to create contact:", newContact.error);
+      console.log("Error: Failed to create contact:", newContact.error);
     }
 
     // 3. Get specific contact
@@ -53,10 +53,10 @@ const contactsExample = async () => {
     const contact = await api.contacts.getContact("50212345678");
     
     if (contact.ok) {
-      console.log("✅ Contact retrieved successfully");
+      console.log("Success: Contact retrieved successfully");
       console.log("Contact details:", contact.data);
     } else {
-      console.log("❌ Failed to get contact:", contact.error);
+      console.log("Error: Failed to get contact:", contact.error);
     }
 
     // 4. Update contact
@@ -68,10 +68,10 @@ const contactsExample = async () => {
     });
     
     if (updatedContact.ok) {
-      console.log("✅ Contact updated successfully");
+      console.log("Success: Contact updated successfully");
       console.log("Updated contact:", updatedContact.data);
     } else {
-      console.log("❌ Failed to update contact:", updatedContact.error);
+      console.log("Error: Failed to update contact:", updatedContact.error);
     }
 
     // 5. Get contact groups
@@ -79,10 +79,10 @@ const contactsExample = async () => {
     const contactGroups = await api.contacts.getContactGroups("50212345678");
     
     if (contactGroups.ok) {
-      console.log("✅ Contact groups retrieved successfully");
+      console.log("Success: Contact groups retrieved successfully");
       console.log("Contact groups:", contactGroups.data);
     } else {
-      console.log("❌ Failed to get contact groups:", contactGroups.error);
+      console.log("Error: Failed to get contact groups:", contactGroups.error);
     }
 
     // 6. Add tag to contact
@@ -90,10 +90,10 @@ const contactsExample = async () => {
     const addTag = await api.contacts.addTagToContact("50212345678", "customers");
     
     if (addTag.ok) {
-      console.log("✅ Tag added successfully");
+      console.log("Success: Tag added successfully");
       console.log("Updated contact:", addTag.data);
     } else {
-      console.log("❌ Failed to add tag:", addTag.error);
+      console.log("Error: Failed to add tag:", addTag.error);
     }
 
     // 7. Remove tag from contact
@@ -101,9 +101,9 @@ const contactsExample = async () => {
     const removeTag = await api.contacts.removeTagFromContact("50212345678", "customers");
     
     if (removeTag.ok) {
-      console.log("✅ Tag removed successfully");
+      console.log("Success: Tag removed successfully");
     } else {
-      console.log("❌ Failed to remove tag:", removeTag.error);
+      console.log("Error: Failed to remove tag:", removeTag.error);
     }
 
     // 8. Delete contact (commented out to avoid accidental deletion)
@@ -112,16 +112,16 @@ const contactsExample = async () => {
     const deleteResult = await api.contacts.deleteContact("50212345678");
     
     if (deleteResult.ok) {
-      console.log("✅ Contact deleted successfully");
+      console.log("Success: Contact deleted successfully");
     } else {
-      console.log("❌ Failed to delete contact:", deleteResult.error);
+      console.log("Error: Failed to delete contact:", deleteResult.error);
     }
     */
 
-    console.log("\n✨ Contact management example completed!");
+    console.log("\nContact management example completed!");
 
   } catch (error) {
-    console.error("❌ Error in contacts example:", error.message);
+    console.error("Error in contacts example:", error.message);
   }
 };
 

@@ -16,13 +16,13 @@ const api = new SmsApi(
   process.env.URL
 );
 
-console.log("🧪 Testing SMS API SDK");
+console.log("Testing SMS API SDK");
 console.log("======================");
 
 // Test getDeliveryReports
 const testGetDeliveryReports = async () => {
   try {
-    console.log("\n📊 Testing getDeliveryReports...");
+    console.log("\n Testing getDeliveryReports...");
     
     const response = await api.messages.getDeliveryReports({
       startDate: "2025-07-01",
@@ -31,14 +31,14 @@ const testGetDeliveryReports = async () => {
       direction: "MT"
     });
     
-    console.log("✅ getDeliveryReports response:");
+    console.log(" getDeliveryReports response:");
     console.log("Status:", response.status);
     console.log("Code:", response.code);
     console.log("OK:", response.ok);
     console.log("Number of reports:", response.data ? response.data.length : 0);
     
     if (response.data && response.data.length > 0) {
-      console.log("\n📋 Sample reports:");
+      console.log("\n Sample reports:");
       response.data.slice(0, 3).forEach((report, index) => {
         console.log(`  Report ${index + 1}:`);
         console.log(`    MSISDN: ${report.msisdn}`);
@@ -52,7 +52,7 @@ const testGetDeliveryReports = async () => {
     
     return response;
   } catch (error) {
-    console.log("❌ Error in getDeliveryReports:", error.message);
+    console.log("Error: Error in getDeliveryReports:", error.message);
     throw error;
   }
 };
@@ -60,7 +60,7 @@ const testGetDeliveryReports = async () => {
 // Test send message
 const testSendMessage = async () => {
   try {
-    console.log("\n📤 Testing send message...");
+    console.log("\n Testing send message...");
     
     // Get a valid MSISDN from delivery reports
     const deliveryResponse = await api.messages.getDeliveryReports({
@@ -83,12 +83,12 @@ const testSendMessage = async () => {
       id: Date.now(),
     });
     
-    console.log("✅ Message sent successfully!");
+    console.log(" Message sent successfully!");
     console.log("Response:", response.data);
     
     return response;
   } catch (error) {
-    console.log("❌ Error sending message:", error.message);
+    console.log("Error: Error sending message:", error.message);
     if (error.response?.data) {
       console.log("Error details:", error.response.data);
     }
@@ -105,10 +105,10 @@ const runTests = async () => {
     // Test 2: Send message
     await testSendMessage();
     
-    console.log("\n🎉 All tests completed successfully!");
+    console.log("\n All tests completed successfully!");
     
   } catch (error) {
-    console.log("\n💥 Test sequence failed:", error.message);
+    console.log("\n Test sequence failed:", error.message);
   }
 };
 

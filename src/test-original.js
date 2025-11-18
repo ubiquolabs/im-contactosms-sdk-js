@@ -18,7 +18,7 @@ const api = new SmsApi(
   process.env.URL
 );
 
-console.log("🔍 Testing Original Structure");
+console.log("Testing Original Structure");
 console.log("============================");
 
 /* MENSAJES */
@@ -27,10 +27,10 @@ const testSendMessage = async (body) => {
   try {
     console.log("1. Init testSendMessage");
     const response = await api.messages.sendToContact(body);
-    console.log("✅ Message sent successfully!");
+    console.log("Success: Message sent successfully!");
     console.log("Response:", response.data);
   } catch (error) {
-    console.log("❌ Error sending message:", error.response?.data || error.message);
+    console.log("Error: Error sending message:", error.response?.data || error.message);
   }
 };
 
@@ -38,10 +38,10 @@ const testListMessages = async (params) => {
   try {
     console.log("1. Init testListMessages");
     const response = await api.messages.listMessages(params);
-    console.log("✅ Messages retrieved successfully!");
+    console.log("Success: Messages retrieved successfully!");
     console.log("Response:", response.data);
   } catch (error) {
-    console.log("❌ Error listing messages:", error.response?.data || error.message);
+    console.log("Error: Error listing messages:", error.response?.data || error.message);
   }
 };
 
@@ -51,10 +51,10 @@ const testListContacts = async (params) => {
   try {
     console.log("1. Init testListContacts");
     const response = await api.contacts.listContacts(params);
-    console.log("✅ Contacts retrieved successfully!");
+    console.log("Success: Contacts retrieved successfully!");
     console.log("Response:", response.data);
   } catch (error) {
-    console.log("❌ Error listing contacts:", error.response?.data || error.message);
+    console.log("Error: Error listing contacts:", error.response?.data || error.message);
   }
 };
 
@@ -62,23 +62,23 @@ const testGetContact = async (msisdn) => {
   try {
     console.log("1. Init testGetContact");
     const response = await api.contacts.getContact(msisdn);
-    console.log("✅ Contact retrieved successfully!");
+    console.log("Success: Contact retrieved successfully!");
     console.log("Response:", response.data);
   } catch (error) {
-    console.log("❌ Error getting contact:", error.response?.data || error.message);
+    console.log("Error: Error getting contact:", error.response?.data || error.message);
   }
 };
 
 // Asynchronous IIFE to run tests sequentially
 (async () => {
-  console.log("\n📤 Testing Send Message...");
+  console.log("\n Testing Send Message...");
   await testSendMessage({
     msisdn: "50212345678",
     message: "Test SMS from JavaScript SDK v4",
     id: Date.now(), // Use timestamp to avoid duplicate ID
   });
 
-  console.log("\n📋 Testing List Messages...");
+  console.log("\nTesting List Messages...");
   await testListMessages({
     limit: 10,
     direction: "MT",
@@ -87,9 +87,9 @@ const testGetContact = async (msisdn) => {
     delivery_status_enable: "true"
   });
 
-  console.log("\n👥 Testing List Contacts...");
+  console.log("\n Testing List Contacts...");
   await testListContacts({ limit: 10 });
 
-  console.log("\n👤 Testing Get Contact...");
+  console.log("\n Testing Get Contact...");
   await testGetContact("50212345678");
 })(); 

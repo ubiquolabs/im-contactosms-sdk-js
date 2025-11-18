@@ -9,7 +9,7 @@ const api = new SmsApi(
 );
 
 const tagsExample = async () => {
-  console.log("🏷️ Tags API Examples");
+  console.log("Tags API Examples");
   console.log("====================");
 
   try {
@@ -18,10 +18,10 @@ const tagsExample = async () => {
     const allTags = await api.tags.listTags();
     
     if (allTags.ok) {
-      console.log(`✅ Found ${allTags.data?.length || 0} tags`);
+      console.log(`Success: Found ${allTags.data?.length || 0} tags`);
       console.log("All tags:", allTags.data);
     } else {
-      console.log("❌ Failed to list tags:", allTags.error);
+      console.log("Error: Failed to list tags:", allTags.error);
     }
 
     // 2. Search tags by name
@@ -31,10 +31,10 @@ const tagsExample = async () => {
     });
     
     if (searchTags.ok) {
-      console.log(`✅ Found ${searchTags.data?.length || 0} matching tags`);
+      console.log(`Success: Found ${searchTags.data?.length || 0} matching tags`);
       console.log("Matching tags:", searchTags.data);
     } else {
-      console.log("❌ Failed to search tags:", searchTags.error);
+      console.log("Error: Failed to search tags:", searchTags.error);
     }
 
     // 3. Get contacts in a specific tag
@@ -44,10 +44,10 @@ const tagsExample = async () => {
     });
     
     if (tagContacts.ok) {
-      console.log(`✅ Found ${tagContacts.data?.length || 0} contacts in tag 'customers'`);
+      console.log(`Success: Found ${tagContacts.data?.length || 0} contacts in tag 'customers'`);
       console.log("Tag contacts:", tagContacts.data?.slice(0, 2));
     } else {
-      console.log("❌ Failed to get tag contacts:", tagContacts.error);
+      console.log("Error: Failed to get tag contacts:", tagContacts.error);
     }
 
     // 4. Add tag to a contact
@@ -55,10 +55,10 @@ const tagsExample = async () => {
     const addTag = await api.contacts.addTagToContact("50212345678", "customers");
     
     if (addTag.ok) {
-      console.log("✅ Tag added successfully to contact");
+      console.log("Success: Tag added successfully to contact");
       console.log("Updated contact:", addTag.data);
     } else {
-      console.log("❌ Failed to add tag to contact:", addTag.error);
+      console.log("Error: Failed to add tag to contact:", addTag.error);
     }
 
     // 5. Remove tag from a contact
@@ -66,9 +66,9 @@ const tagsExample = async () => {
     const removeTag = await api.contacts.removeTagFromContact("50212345678", "customers");
     
     if (removeTag.ok) {
-      console.log("✅ Tag removed successfully from contact");
+      console.log("Success: Tag removed successfully from contact");
     } else {
-      console.log("❌ Failed to remove tag from contact:", removeTag.error);
+      console.log("Error: Failed to remove tag from contact:", removeTag.error);
     }
 
     // 6. Get contact groups
@@ -76,10 +76,10 @@ const tagsExample = async () => {
     const contactGroups = await api.contacts.getContactGroups("50212345678");
     
     if (contactGroups.ok) {
-      console.log("✅ Contact groups retrieved successfully");
+      console.log("Success: Contact groups retrieved successfully");
       console.log("Contact groups:", contactGroups.data);
     } else {
-      console.log("❌ Failed to get contact groups:", contactGroups.error);
+      console.log("Error: Failed to get contact groups:", contactGroups.error);
     }
 
 
@@ -89,16 +89,16 @@ const tagsExample = async () => {
     const deleteTag = await api.tags.deleteTag("test-tag");
     
     if (deleteTag.ok) {
-      console.log("✅ Tag deleted successfully");
+      console.log("Success: Tag deleted successfully");
     } else {
-      console.log("❌ Failed to delete tag:", deleteTag.error);
+      console.log("Error: Failed to delete tag:", deleteTag.error);
     }
 
-    console.log("\n✨ Tags example completed!");
-    console.log("\n📝 Note: Tags are managed through individual contact operations only.");
+    console.log("\n Tags example completed!");
+    console.log("\n Note: Tags are managed through individual contact operations only.");
 
   } catch (error) {
-    console.error("❌ Error in tags example:", error.message);
+    console.error("Error: Error in tags example:", error.message);
   }
 };
 

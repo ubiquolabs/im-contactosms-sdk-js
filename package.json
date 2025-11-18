@@ -9,7 +9,13 @@
     "test": "node src/test-original.js",
     "start": "node src/test-original.js"
   },
-  "keywords": ["sms", "api", "sdk", "javascript", "messaging"],
+  "keywords": [
+    "sms",
+    "api",
+    "sdk",
+    "javascript",
+    "messaging"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
